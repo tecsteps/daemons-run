@@ -31,6 +31,7 @@ test('real Hetzner server: create → online → terminal', async ({ page, conte
   if (!server) {
     await page.goto('/servers/new');
     await page.getByTestId('server-name').fill(NAME);
+    for (const a of (process.env.EXTRA_AGENTS ?? '').split(',').filter(Boolean)) await page.getByTestId(`agent-${a}`).click();
     const options = await (await page.request.get('/api/providers/hetzner/options')).json();
     const size = options.sizes.find((s: { name: string }) => s.name === TYPE);
     const location = ['nbg1', 'fsn1', 'hel1'].find((l) => size.availableIn.includes(l));

@@ -33,6 +33,8 @@ cd control-plane && npx wrangler login
 
 This opens a browser window for Cloudflare's OAuth sign-in. Tell the human: "Please approve the Cloudflare login in your browser." Wait until the command finishes.
 
+No browser (CI, a remote machine)? Skip the login and set `CLOUDFLARE_API_TOKEN` (an API token with Workers Scripts, D1 and Account Settings edit permissions, and Workers Routes if you use a custom domain) and `CLOUDFLARE_ACCOUNT_ID` in the environment of the next step instead. Never print the token.
+
 If the login belongs to several Cloudflare accounts, the install script lists them and stops. Ask the human which one to use and set `CLOUDFLARE_ACCOUNT_ID=<id>` for the next step.
 
 ## 4. Install
@@ -43,7 +45,7 @@ Go back to the repository root and run the installer:
 cd .. && npm run install-control-plane
 ```
 
-The script creates or reuses the D1 database, applies migrations, deploys both Workers and sets a setup code. At the end it prints a setup link like:
+The script takes about a minute. It creates or reuses the D1 database, applies migrations, deploys both Workers and sets a setup code. On the first install it ends with a setup link like:
 
 ```
 https://daemons.<account>.workers.dev/setup#code=...
@@ -54,7 +56,8 @@ https://daemons.<account>.workers.dev/setup#code=...
 Give the human the printed setup link and tell them:
 
 - Open it on the device you want to sign in with (phone or computer), and register a passkey there.
-- The link works once. Do not share it.
+- The link works once. Do not share it, and do not write it to files or logs.
+- `npm install` may print audit warnings for development tools; they do not affect the install.
 
 That is the end of the install. In the control plane, the human pastes a Hetzner API token and clicks **Create server**, or adds any Ubuntu 24.04 machine with the one-line command shown there.
 
