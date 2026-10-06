@@ -152,7 +152,7 @@ async function newEnrollmentToken(env: Env, serverId: string): Promise<string> {
 }
 
 function controlPlaneLabel(origin: string): string {
-  return new URL(origin).hostname.replace(/[^a-z0-9-]/gi, '-').slice(0, 63);
+  return new URL(origin).hostname.toLowerCase().replace(/[^a-z0-9.-]/g, '-').slice(0, 63);
 }
 
 export function labelsFor(origin: string, extra: Record<string, string> = {}): Record<string, string> {
