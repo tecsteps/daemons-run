@@ -12,7 +12,7 @@ daemons.run is free and open source (MIT): https://github.com/tecsteps/daemons-r
 
 ## 1. Check prerequisites
 
-- Node.js 20 or newer: `node --version`
+- Node.js 22 or newer: `node --version`
 - git: `git --version`
 
 If either is missing, stop and tell the human what to install.
@@ -60,7 +60,7 @@ That is the end of the install. In the control plane, the human pastes a Hetzner
 
 ## Good to know
 
-- **Rerunning is safe.** `npm run install-control-plane` updates in place, keeps the D1 database, its data and the setup code. If the control plane is already set up, it prints the existing URL instead of a new setup link.
+- **Rerunning is safe.** `npm run install-control-plane` updates in place, keeps the D1 database, its data and the setup code. When a setup code is already set, it prints the control plane URL instead of a new setup link. If the human never used the first link, run `npm run reset-access` to get a new one.
 - **Lost all passkeys?** Run `npm run reset-access` from the repository root. It prints a new setup link. Completing setup with it revokes every other passkey and session.
 - **Name collision.** If a Worker named `daemons` (or `daemons-apps`) already exists in the account and is not a daemons.run install, the script stops and changes nothing. Install under another name: `npm run install-control-plane -- --name <other>` (for example `daemons-2`). Use the same `-- --name <other>` with `npm run reset-access` later.
 - **Not signed in.** If the script says Wrangler is not signed in, repeat step 3 and run step 4 again.

@@ -1,8 +1,8 @@
 ---
 // Adapted from old daemons-run resources/views/components/public/art.blade.php.
 // Nothing that creates a stacking context may wrap this image, or the blend mode stops working.
-interface Props { name: string; width: number; height: number; alt: string; tone?: 'dark' | 'light'; eager?: boolean; sizes?: string; class?: string }
-const { name, width, height, alt, tone = 'dark', eager = false, sizes, class: className = '' } = Astro.props;
+interface Props { name: string; small?: string; width: number; height: number; alt: string; tone?: 'dark' | 'light'; eager?: boolean; sizes?: string; class?: string }
+const { name, small, width, height, alt, tone = 'dark', eager = false, sizes, class: className = '' } = Astro.props;
 ---
-<img src={`/images/${name}.webp`} {width} {height} {alt} {sizes} loading={eager ? 'eager' : 'lazy'} fetchpriority={eager ? 'high' : undefined} decoding="async"
+<img src={`/images/${name}.webp`} srcset={small ? `/images/${small}.webp 800w, /images/${name}.webp ${width}w` : undefined} {width} {height} {alt} {sizes} loading={eager ? 'eager' : 'lazy'} fetchpriority={eager ? 'high' : undefined} decoding="async"
   class:list={['object-contain', tone === 'dark' ? 'mix-blend-lighten' : 'mix-blend-multiply', className]} />

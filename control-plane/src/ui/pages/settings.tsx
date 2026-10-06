@@ -1,6 +1,9 @@
 import { startRegistration } from '@simplewebauthn/browser';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Check, KeyRound, Monitor, Moon, Pencil, Sun, Trash2 } from 'lucide-react';
+import { Check, KeyRound, Monitor, Moon, Pencil, Smartphone, Sun, Trash2 } from 'lucide-react';
+import qrcode from 'qrcode-generator';
+import { CopyField } from '@/components/CopyControl';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useState } from 'react';
 import { ConfirmDestructive } from '@/components/ConfirmDestructive';
 import { Page, SectionCard } from '@/components/layout/Page';
@@ -74,6 +77,10 @@ function Passkeys() {
     >
       {error ? <Notice onRetry={() => void refetch()}>{error.message}</Notice> : null}
       {addError ? <Notice>{addError}</Notice> : null}
+      <div className="flex flex-wrap items-center gap-2">
+        <DeviceLink />
+        <span className="text-caption text-muted">For a phone whose passkeys do not sync with this device.</span>
+      </div>
       <ul className="flex flex-col divide-y divide-line">
         {passkeys.map((p) => (
           <li key={p.id} className="flex min-w-0 flex-wrap items-center gap-3 py-3 first:pt-0 last:pb-0">
@@ -129,6 +136,43 @@ function Passkeys() {
         onConfirm={() => deleting && remove.mutate(deleting.id)}
       />
     </SectionCard>
+  );
+}
+
+function DeviceLink() {
+  const [link, setLink] = useState<{ url: string; expiresAt: number } | null>(null);
+  const create = useMutation({
+    mutationFn: () => api<{ url: string; expiresAt: number }>('/passkeys/device-link', { method: 'POST' }),
+    onSuccess: setLink,
+  });
+  const svg = link
+    ? (() => {
+        const qr = qrcode(0, 'M');
+        qr.addData(link.url);
+        qr.make();
+        return qr.createSvgTag({ cellSize: 4, margin: 2, scalable: true });
+      })()
+    : '';
+  return (
+    <>
+      <Button variant="secondary" size="sm" onClick={() => create.mutate()} disabled={create.isPending} data-testid="add-device">
+        <Smartphone />
+        Add a phone
+      </Button>
+      {create.error ? <Notice>{create.error.message}</Notice> : null}
+      <Dialog open={!!link} onOpenChange={(o) => !o && setLink(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add a phone or another device</DialogTitle>
+            <DialogDescription>
+              Scan this code with the device, or open the link there. It creates that device's own passkey. The link works once, for 10 minutes.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="mx-auto w-56 rounded-md bg-white p-2" data-testid="device-qr" dangerouslySetInnerHTML={{ __html: svg }} />
+          {link ? <CopyField value={link.url} testId="device-link" /> : null}
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
 

@@ -19,7 +19,6 @@ const steps = [
 <Layout
   title="daemons.run: Your agents never sleep."
   description="Free, open source development servers for coding agents. Install your own control plane into your Cloudflare account, create servers in your Hetzner account, and work from a browser terminal, also on your phone."
-  preload="/images/art-hero-machine-tight@2x.webp"
 >
   <!-- Hero, adapted from old hero-machine.blade.php -->
   <div class="lg:flex lg:min-h-[calc(100svh-4.5rem)] lg:flex-col">
@@ -48,6 +47,8 @@ const steps = [
         <div class="relative mx-auto mt-8 flex w-full min-w-0 max-w-[26rem] flex-col items-center justify-center pb-8 sm:max-w-[30rem] lg:mt-0 lg:max-w-none lg:py-4">
           <img
             src="/images/art-hero-machine-tight@2x.webp"
+            srcset="/images/art-hero-machine-tight-800.webp 800w, /images/art-hero-machine-tight@2x.webp 1119w"
+            sizes="(min-width: 1024px) 31rem, (min-width: 640px) 30rem, 26rem"
             width="1119"
             height="765"
             alt="The daemons.run mascot working at a laptop on top of a glowing server that shows a terminal and a live app preview."
@@ -60,9 +61,9 @@ const steps = [
 
     <section aria-label="Highlights" class="border-t border-white/10 bg-ink-950">
       <div class="mx-auto grid max-w-6xl grid-cols-1 gap-6 px-4 py-6 md:px-6 md:py-7 lg:grid-cols-3 lg:gap-0 lg:divide-x lg:divide-white/10 [&>*]:lg:px-6 [&>*:first-child]:lg:pl-0 [&>*:last-child]:lg:pr-0">
-        <Feature title="Always on" icon="bolt">Close your laptop. Your agents, apps and databases keep running on the server.</Feature>
-        <Feature title="Yours" icon="shield">Your Cloudflare, your Hetzner account. No SaaS in between.</Feature>
-        <Feature title="From any device" icon="devices">A full terminal in the browser, on your desktop or your phone.</Feature>
+        <Feature level="h2" title="Always on" icon="bolt">Close your laptop. Your agents, apps and databases keep running on the server.</Feature>
+        <Feature level="h2" title="Yours" icon="shield">Your Cloudflare, your Hetzner account. No SaaS in between.</Feature>
+        <Feature level="h2" title="From any device" icon="devices">A full terminal in the browser, on your desktop or your phone.</Feature>
       </div>
     </section>
   </div>
@@ -103,7 +104,7 @@ const steps = [
         </div>
       </div>
       <div class="min-w-0">
-        <Art tone="light" name="art-solo-bouncer@2x" width={1600} height={858} alt="The mascot standing guard between a cluttered laptop desk and a clean box that holds only project folders and a terminal." class="h-auto w-full" />
+        <Art tone="light" name="art-solo-bouncer@2x" small="art-solo-bouncer-800" sizes="(min-width: 1024px) 31rem, 100vw" width={1600} height={858} alt="The mascot standing guard between a cluttered laptop desk and a clean box that holds only project folders and a terminal." class="h-auto w-full" />
       </div>
     </div>
   </Stripe>
@@ -140,9 +141,9 @@ const steps = [
           <div class="flex gap-1.5 border-b border-white/10 px-4 py-2.5" aria-hidden="true">
             <span class="h-2.5 w-2.5 rounded-full bg-white/20"></span><span class="h-2.5 w-2.5 rounded-full bg-white/20"></span><span class="h-2.5 w-2.5 rounded-full bg-white/20"></span>
           </div>
-          <div class="overflow-x-auto px-4 py-3">
-            <p class="whitespace-nowrap"><span class="text-lime">dev@server-1</span>:<span class="text-bone/60">/projects/shop</span>$ daemons expose 3000</p>
-            <p class="whitespace-nowrap text-bone/75">https://daemons-apps.&lt;you&gt;.workers.dev/shop/</p>
+          <div class="px-4 py-3 [overflow-wrap:anywhere]">
+            <p><span class="text-lime">dev@server-1</span>:<span class="text-bone/60">/projects/shop</span>$ <span class="whitespace-nowrap">daemons expose 3000</span></p>
+            <p class="text-bone/75">https://daemons-apps.&lt;you&gt;.workers.dev/shop/</p>
           </div>
         </div>
         <ul class="mt-8 grid gap-3 text-[0.9375rem] leading-6 text-ink-900/80">
@@ -151,7 +152,7 @@ const steps = [
         </ul>
       </div>
       <div class="min-w-0">
-        <Art tone="light" name="art-home-real-software@2x" width={1800} height={681} alt="The mascot at a laptop between a terminal running npm run dev and a browser window showing My App live." class="h-auto w-full" />
+        <Art tone="light" name="art-home-real-software@2x" small="art-home-real-software-800" sizes="(min-width: 1024px) 34rem, 100vw" width={1800} height={681} alt="The mascot at a laptop between a terminal running npm run dev and a browser window showing My App live." class="h-auto w-full" />
       </div>
     </div>
   </Stripe>
@@ -159,7 +160,7 @@ const steps = [
   <!-- 5. Cost -->
   <Stripe id="cost" label="Cost">
     <Heading lead="daemons.run costs nothing. You pay your server provider directly, at their prices.">Free software. <span class="text-lime">Fair servers.</span></Heading>
-    <div class="mt-10 grid gap-4 md:grid-cols-3">
+    <div class="mt-10 grid gap-4 lg:grid-cols-3">
       <div class="rounded-[12px] border border-lime/50 bg-white/[0.03] p-5">
         <p class="font-mono text-caption tracking-[0.14em] text-bone/70 uppercase">daemons.run</p>
         <p class="mt-2 text-3xl font-bold text-lime">€0</p>

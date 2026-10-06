@@ -1,14 +1,14 @@
 ---
 // Adapted from old daemons-run resources/views/components/public/feature.blade.php
 import Icon, { type IconName } from './Icon.astro';
-interface Props { title: string; icon: IconName; tone?: 'dark' | 'light' }
-const { title, icon, tone = 'dark' } = Astro.props;
+interface Props { level?: 'h2' | 'h3'; title: string; icon: IconName; tone?: 'dark' | 'light' }
+const { level: H = 'h3', title, icon, tone = 'dark' } = Astro.props;
 ---
 <article class="min-w-0">
   <div class="flex items-start gap-3">
     <span class:list={['inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-[8px]', tone === 'dark' ? 'border border-white/10 bg-white/[0.03] text-lime' : 'border border-ink-900/12 bg-white text-ink-900']}><Icon name={icon} size={20} /></span>
     <div class="min-w-0">
-      <h3 class="text-[1.0625rem] font-bold">{title}</h3>
+      <H class="text-[1.0625rem] font-bold">{title}</H>
       <p class:list={['mt-1 text-[0.9375rem] leading-6 text-pretty', tone === 'dark' ? 'text-bone/70' : 'text-ink-900/75']}><slot /></p>
     </div>
   </div>

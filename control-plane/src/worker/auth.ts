@@ -328,6 +328,47 @@ authRoutes.post('/auth/logout', requireSameOrigin, async (c) => {
   return c.json({ ok: true });
 });
 
+// --- Add a device: a signed-in owner lets another device register its own passkey ---------
+
+const DEVICE_LINK_TTL = 10 * 60 * 1000;
+
+async function deviceTokenValid(db: D1Database, token: string): Promise<boolean> {
+  const row = await db
+    .prepare("SELECT expires_at FROM app_tickets WHERE token_hash = ? AND kind = 'device' AND used_at IS NULL")
+    .bind(await sha256(token))
+    .first<{ expires_at: number }>();
+  return !!row && row.expires_at > now();
+}
+
+authRoutes.post('/device/options', requireSameOrigin, async (c) => {
+  const { token } = await c.req.json<{ token: string }>();
+  if (!token || !(await deviceTokenValid(c.env.DB, token))) {
+    return c.json({ error: 'This link was used or has expired. Create a new one in Settings on a signed-in device.', code: 'expired' }, 410);
+  }
+  return c.json(await registrationOptions(c, 'add'));
+});
+
+authRoutes.post('/device/finish', requireSameOrigin, async (c) => {
+  const { token, response } = await c.req.json<{ token: string; response: RegistrationResponseJSON }>();
+  const passkey = await verifyRegistration(c, response, 'add');
+  if (!passkey) return c.json({ error: 'The passkey could not be verified. Try again.' }, 400);
+  // Consume the link and store the passkey in one transaction.
+  const results = await c.env.DB.batch([
+    c.env.DB.prepare("UPDATE app_tickets SET used_at = ?1 WHERE token_hash = ?2 AND kind = 'device' AND used_at IS NULL AND expires_at > ?1").bind(
+      now(),
+      await sha256(token ?? ''),
+    ),
+    c.env.DB.prepare(
+      "INSERT INTO passkeys (id, public_key, counter, transports, name, created_at) SELECT ?, ?, ?, ?, ?, ? WHERE changes() = 1",
+    ).bind(passkey.id, passkey.publicKey, passkey.counter, passkey.transports, passkeyName(c.req.header('User-Agent')), now()),
+  ]);
+  if (results[0].meta.changes !== 1 || results[1].meta.changes !== 1) {
+    return c.json({ error: 'This link was used or has expired. Create a new one in Settings on a signed-in device.', code: 'expired' }, 410);
+  }
+  await createSession(c, passkey.id);
+  return c.json({ ok: true });
+});
+
 // --- Passkeys and sessions (owner session) ------------------------------------------------
 
 export const accountRoutes = new Hono<HonoEnv>();
@@ -338,6 +379,13 @@ accountRoutes.get('/passkeys', async (c) => {
 });
 
 accountRoutes.post('/passkeys/options', async (c) => c.json(await registrationOptions(c, 'add')));
+
+accountRoutes.post('/passkeys/device-link', async (c) => {
+  const token = randomToken();
+  const expiresAt = now() + DEVICE_LINK_TTL;
+  await c.env.DB.prepare("INSERT INTO app_tickets (token_hash, kind, expires_at) VALUES (?, 'device', ?)").bind(await sha256(token), expiresAt).run();
+  return c.json({ url: `${new URL(c.req.url).origin}/add-device#t=${token}`, expiresAt });
+});
 
 accountRoutes.post('/passkeys', async (c) => {
   const { response } = await c.req.json<{ response: RegistrationResponseJSON }>();

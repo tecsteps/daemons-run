@@ -13,5 +13,5 @@
     "install-control-plane": "node scripts/install-control-plane.mjs",
     "reset-access": "node scripts/install-control-plane.mjs --reset-access"
   },
-  "engines": { "node": ">=20" }
+  "engines": { "node": ">=22.12" }
 }

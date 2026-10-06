@@ -21,6 +21,7 @@ Proof of ownership before the first passkey is a **setup code**, a Worker secret
 - **Sign-in.** One button: "Sign in with passkey". WebAuthn discoverable credentials (no username field), user verification required, RP ID = the exact control plane hostname, exact origin check, single-use challenges stored in D1 with a 5-minute expiry. Library: `@simplewebauthn/server` and `@simplewebauthn/browser`.
 - **Session.** Host-only cookie (no `Domain` attribute), HttpOnly, Secure, SameSite=Lax, 30-day sliding expiry; sessions stored in D1. Revoking a session or passkey also closes that session's open terminal WebSockets.
 - **Origin check.** Every state-changing `/api/*` request and every browser WebSocket upgrade must carry `Origin` equal to the control plane origin.
+- **Add a device link** (decided 2026-10-06): Settings → Add a phone shows a QR code and a single-use link (10 minutes) minted by the signed-in owner; opening it on the other device registers that device's own passkey and signs it in. Needed when passkeys do not sync between the devices (Mac + Android).
 - **Add another passkey** from Settings (e.g. phone plus laptop). Strongly nudged right after setup ("Add a second device so you never get locked out").
 - **Manage passkeys:** list with name, created and last used; rename; delete (never the last one). Sessions: list and revoke.
 

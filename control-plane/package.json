@@ -49,6 +49,7 @@
     "codemirror": "^6.0.2",
     "concurrently": "^10.0.5",
     "lucide-react": "^1.52.0",
+    "qrcode-generator": "^2.0.4",
     "radix-ui": "^1.7.0",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",

@@ -4,7 +4,7 @@ import { createBrowserRouter, Navigate, Outlet, useLocation, useNavigate } from 
 import { AppShell } from '@/components/AppShell';
 import { api } from '@/lib/api';
 import type { Me } from '@/lib/types';
-import { LoginPage, SetupPage } from '@/pages/auth';
+import { AddDevicePage, LoginPage, SetupPage } from '@/pages/auth';
 import { NotFoundPage } from '@/pages/not-found';
 import { ServersPage } from '@/pages/servers';
 import { ProjectsPage } from '@/pages/projects';
@@ -45,6 +45,7 @@ function RequireOwner({ fill = false }: { fill?: boolean }) {
 export const router = createBrowserRouter([
   { path: '/setup', element: <SetupPage /> },
   { path: '/login', element: <LoginPage /> },
+  { path: '/add-device', element: <AddDevicePage /> },
   {
     element: <RequireOwner />,
     children: [

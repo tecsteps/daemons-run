@@ -191,3 +191,44 @@ export function SetupPage() {
     </AuthSurface>
   );
 }
+
+export function AddDevicePage() {
+  const queryClient = useQueryClient();
+  const [token] = useState(() => /t=([^&]+)/.exec(window.location.hash)?.[1] ?? '');
+  const [error, setError] = useState<string | null>(token ? null : 'This link is incomplete. Open the whole link, or scan the code again.');
+  const [busy, setBusy] = useState(false);
+  const [done, setDone] = useState(false);
+  useEffect(() => {
+    if (token) history.replaceState(null, '', '/add-device');
+  }, [token]);
+  if (done) return <Navigate to="/servers" replace />;
+
+  async function register() {
+    setError(null);
+    if (!browserSupportsWebAuthn()) return setError(unsupported);
+    setBusy(true);
+    try {
+      const options = await api<Parameters<typeof startRegistration>[0]['optionsJSON']>('/device/options', { method: 'POST', json: { token } });
+      const response = await startRegistration({ optionsJSON: options });
+      await api('/device/finish', { method: 'POST', json: { token, response } });
+      queryClient.setQueryData(['me'], { authenticated: true, setupOpen: false, setupCodeConfigured: true });
+      setDone(true);
+    } catch (e) {
+      if (!isCancel(e)) setError(e instanceof Error ? e.message : 'The passkey could not be created.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <AuthSurface title="Add this device" subtitle="Create a passkey on this device, so you can sign in here.">
+      <div className="flex flex-col gap-4">
+        {error ? <ErrorLine>{error}</ErrorLine> : null}
+        <Button size="cta" className="w-full" onClick={() => void register()} disabled={busy || !token} data-testid="add-device-passkey">
+          <KeyRound className="size-4" />
+          {busy ? 'Waiting for your passkey…' : 'Create passkey'}
+        </Button>
+      </div>
+    </AuthSurface>
+  );
+}
