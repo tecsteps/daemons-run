@@ -16,11 +16,13 @@ Reuse from the old project: [ui-reference.md](ui-reference.md), sections "Server
 
 - **Provider credentials** (Settings → Providers):
   - Hetzner: one API token.
-  - Validated on save with a cheap read call; a green "Connected" or a precise error.
+  - Validated on save with a cheap read call (`GET /locations?per_page=1`); a green "Connected" or a precise error.
   - Stored encrypted in D1: AES-GCM with a random 96-bit nonce per value and a key id stored next to the ciphertext. The key is generated on first use and kept in a dedicated Durable Object's storage, never in D1. If the key is ever lost, the UI asks the user to re-enter provider credentials; nothing else depends on it.
   - Never returned to the UI after saving; only "Connected · added 3 Oct".
 - **SSH key (optional)** in Settings: a public key passed to Hetzner on create. Hetzner emails a root password when no key is given, so without a key the installer disables SSH password login and the UI says "No SSH key: access the server through the browser terminal".
 - **Create server** form: provider, location, server type (the full grouped list below), name, and coding agents to install (checkboxes: Claude Code, Codex, OpenCode; Claude Code preselected; at least one). Ubuntu 24.04 LTS only.
+- **Confirm before buying.** A summary (type, location, monthly price) and a confirmation dialog: "Hetzner bills this server to your Hetzner account at the price shown, starting now. Delete it any time to stop the charge." The form also says once that daemons.run adds no markup. Pattern from the pre-pivot purchase form (ui-reference.md).
+- **Labels.** Everything created at Hetzner carries `managed-by=daemons` and the control plane id, so we only ever list, change or delete our own resources.
 - **Durable creation.** The server row (status `creating`, chosen options, enrollment token hash) is written to D1 before the provider call, and the provider ID right after. If the provider call times out, the control plane looks the server up by name at the provider before showing an error, and never buys a second VM by itself. Status is reconciled from the provider API whenever the server page or list is open, so closing the browser changes nothing.
 - Provisioning call injects the cloud-init bootstrap from 05 with a one-time enrollment token.
 - **Server page**: status, provider, IP, size, location, created date, agent version, last heartbeat.
@@ -41,7 +43,7 @@ Hetzner is the only provider in v1, but nothing outside one folder knows that:
 ## Provider notes
 
 - Hetzner: hourly billing, fast (about 1 minute), `user_data` supported. The only provider in v1.
-- **Sizes: no recommendation, the full list** (owner, 2026-10-06). The create form lists every current Hetzner server type, read live from the API and grouped like Hetzner's own console: **Cost-Optimized** (shared, older hardware, x86 or Arm64), **Regular Performance** (shared, newer AMD) and **General Purpose** (dedicated vCPUs). Columns: name, vCPUs, architecture, RAM, SSD, traffic, price per hour and per month; sorted by price. Types sold out at the chosen location are shown disabled with "Not available in <location>". Deprecated types are hidden. Both x86 and Arm64 work (05 ships both agent builds).
+- **Sizes: no recommendation, the full list** (owner, 2026-10-06). The create form lists every current Hetzner server type, read live from the API and grouped like Hetzner's own console: **Cost-Optimized** (shared, older hardware, x86 or Arm64), **Regular Performance** (shared, newer AMD) and **General Purpose** (dedicated vCPUs). Columns: name, vCPUs, architecture, RAM, SSD, traffic, price per hour and per month; sorted by price. Availability per location comes from `server_types[].locations[].available` in the Hetzner API; types sold out at the chosen location are shown disabled with "Not available in <location>". Deprecated types are hidden. Both x86 and Arm64 work (05 ships both agent builds).
 - Contabo and other providers: deferred (owner, 2026-10-06: start with Hetzner only). Their machines join through **Add existing server**. When Contabo comes back: deletion is a cancellation that runs until the end of the billing period, so the UI must say so (see the Sol review in git history).
 
 ## Out of scope

@@ -41,6 +41,29 @@ The old project (Laravel + Inertia + React, a different architecture) already so
 
 ## Server provisioning (epic 04)
 
+### Best source: the pre-pivot server purchase (tag `pre-pivot-2026-09-05`)
+
+Before the pivot, the old product was "bring your own Hetzner", and buying a server was fully built and polished. Provisioning worked differently (Incus), but the purchase UI is close to what epic 04 needs. Read files from the tag without checking it out:
+
+```
+git -C /Users/wesner/Herd/daemons-run show "pre-pivot-2026-09-05:<path>"
+```
+
+(also on GitHub: `tecsteps/daemons-run-old`, a private repo, tag `pre-pivot-2026-09-05`). In zsh, quote the argument: `$T:r…` is a zsh modifier.
+
+| What | Path at the tag | Take |
+|---|---|---|
+| Purchase form | `resources/js/components/ServerPurchaseForm.tsx` (404 lines) | Layout and flow: billing note ("Hetzner bills your payment method directly. daemons.run does not add any markup."), name with a 32-character limit, region select, type cards, agent picker, summary box, **confirmation dialog** (type, region, monthly price, "billed to your Hetzner account starting now", focus on Cancel), "What happens next" list. Drop the cloud-account select (one token), `BrowserRuntimeToggle`, and the TLS step. |
+| Grouped type picker | `resources/js/components/ServerLaneCards.tsx` (486 lines) | The three groups **Cost-Optimized / Regular Performance / General Purpose** as cards, each with a type dropdown sorted by price, CPU vendor, traffic, hourly and monthly price, "show unavailable" switch, phone layout. Exactly the owner's requested picker; drop the recommendation and "fits ~N environments". |
+| Catalog helpers | `resources/js/lib/cloudCatalog.ts` (154 lines), `resources/js/lib/money.ts` (50 lines) | `serverTypeGroups`, `typeGroup`, `cpuVendor`, `priceFor`, `disabledReason`, `trafficInTb`, region labels, EUR formatting. Port almost as is. |
+| Agent picker | `resources/js/components/AgentPicker.tsx` (126 lines) | Coding-agent selection; adapt to checkboxes for Claude Code, Codex, OpenCode. |
+| Provider connect | `resources/js/pages/onboarding/cloud.tsx`, `resources/js/components/CloudProviders.tsx` | Token entry and validation states. |
+| Pages | `resources/js/pages/servers/{create,index,show}.tsx`, `resources/js/pages/onboarding/{server,provision}.tsx`, `resources/js/components/OnboardingShell.tsx` | Server list, detail and the provisioning progress page. |
+| Hetzner API usage | `app/Services/HetznerCloudProvider.php` (PHP, read for API details only) | Server types with prices per location and **availability per location from `server_types[].locations[].available`** (the `/datacenters` endpoint no longer works for this), `/locations` for regions, token check with `GET /locations?per_page=1`, `user_data`, labels on everything, SSH key upload and cleanup. |
+| Early design mockups | `specs/01-ui/page-03-onboarding-cloud.png`, `page-04-onboarding-server.png`, `page-05-onboarding-provisioning.png`, `page-16/17/18-server*.png` | Look of the onboarding steps (2026-08-17 concept art; the built UI above is newer). |
+
+### Later versions (current checkout)
+
 | What | Where | Notes |
 |---|---|---|
 | Provider credential forms | `components/CloudCredentialForms.tsx`, `components/CloudProviders.tsx` | Hetzner field set and validation states. Drop Contabo and OVHcloud for now. |
