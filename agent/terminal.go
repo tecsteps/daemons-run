@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/exec"
 	"regexp"
+	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -16,17 +17,83 @@ import (
 	"github.com/creack/pty"
 )
 
-// tmuxConf is written to /etc/daemons/tmux.conf. The terminal-overrides line keeps tmux off
-// the outer alternate screen so output also lands in the browser's scrollback.
-const tmuxConf = `# Written by daemons-agent; changes are overwritten.
+// tmuxConf is written to /etc/daemons/tmux.conf. Adapted from old daemons-run (tag
+// pre-pivot-2026-09-05) gateway/src/tmux.js: tmux owns the scrollback (copy mode), mouse is
+// on so the browser sends wheel reports, and the wheel bindings depend on the session's
+// harness. Key bindings are server-global, so they consult per-session user options set when
+// the session is created: @daemons_harness (claude|codex|opencode|shell) and @daemons_scroll
+// (copy-mode|page-keys).
+var tmuxConf = buildTmuxConf()
+
+func buildTmuxConf() string {
+	// History is what the user reads when the harness says so (claude, codex) or when the pane
+	// is not on the alternate screen (a shell, or any line-oriented program).
+	history := `#{||:#{==:#{@daemons_scroll},copy-mode},#{==:#{alternate_on},0}}`
+	pageUp := `if -F "#{==:#{@daemons_harness},opencode}" { send-keys C-M-b } { send-keys PageUp }`
+	pageDown := `if -F "#{==:#{@daemons_harness},opencode}" { send-keys C-M-f } { send-keys PageDown }`
+	var b strings.Builder
+	b.WriteString(`# Written by daemons-agent; changes are overwritten.
 set -g status off
 set -g escape-time 0
 set -g history-limit 50000
 set -g default-terminal "xterm-256color"
-set -g mouse off
-set -ga terminal-overrides ",xterm*:smcup@:rmcup@"
-set -as terminal-features ",xterm-256color:RGB"
-`
+set -g mouse on
+set -g allow-passthrough on
+set -g terminal-overrides ",*:Tc"
+set -g terminal-features[90] "xterm-256color:RGB"
+set -g destroy-unattached off
+set -g window-size latest
+`)
+	fmt.Fprintf(&b, "bind -T root WheelUpPane if -F \"#{pane_in_mode}\" { send-keys -M } { if -F \"%s\" { if -F \"#{>:#{history_size},0}\" { copy-mode -e ; send-keys -X scroll-up } } { %s } }\n", history, pageUp)
+	fmt.Fprintf(&b, "bind -T root WheelDownPane if -F \"#{pane_in_mode}\" { send-keys -M } { if -F \"#{!:%s}\" { %s } }\n", history, pageDown)
+	b.WriteString(`bind -T root PageUp if -F "#{&&:#{==:#{@daemons_scroll},copy-mode},#{>:#{history_size},0}}" { copy-mode -e ; send-keys -X page-up } { send-keys PageUp }
+bind -T root PageDown if -F "#{&&:#{==:#{@daemons_scroll},copy-mode},#{pane_in_mode}}" { send-keys -X page-down } { send-keys PageDown }
+`)
+	// Copy mode is transient scrollback: typing leaves it and reaches the application. Page and
+	// mouse bindings stay, so wheel and touch keep navigating history.
+	shared := []string{"Any", "Enter", "Escape", "Tab", "BSpace", "DC", "Up", "Down", "Left", "Right", "Space", ",", ";"}
+	for c := 'a'; c <= 'z'; c++ {
+		shared = append(shared, "C-"+string(c))
+	}
+	tables := map[string][]string{
+		"copy-mode":    slices.Concat(shared, strings.Split("F N P R T X f g n q r t", " ")),
+		"copy-mode-vi": slices.Concat(shared, strings.Split("# $ % * / 0 1 2 3 4 5 6 7 8 9 : ? A B D E F G H J K L M N P T V W X ^ b e f g h j k l n o q r t v w z { }", " ")),
+	}
+	for _, table := range []string{"copy-mode", "copy-mode-vi"} {
+		for _, key := range tables[table] {
+			fmt.Fprintf(&b, "bind -T %s '%s' { send-keys -X cancel ; send-keys }\n", table, key)
+		}
+	}
+	return b.String()
+}
+
+// harnesses: how the wheel scrolls each coding agent (old daemons-run config/agents.php,
+// terminalScrollMode, measured 2026-08-31). claude: tmux copy mode, with Claude Code's
+// alternate screen disabled so its transcript lands in tmux history. codex: copy mode (its
+// main UI writes to scrollback). opencode: page keys C-M-b/C-M-f. shell: copy mode when the
+// pane is not on the alternate screen, else PageUp/PageDown.
+var harnesses = map[string]struct {
+	scroll string
+	env    []string
+}{
+	"claude":   {"copy-mode", []string{"CLAUDE_CODE_DISABLE_ALTERNATE_SCREEN=1"}},
+	"codex":    {"copy-mode", nil},
+	"opencode": {"page-keys", nil},
+	"shell":    {"page-keys", nil},
+}
+
+// harnessFor picks the harness: the explicit one, else the start command's program.
+func harnessFor(harness, command string) string {
+	if _, ok := harnesses[harness]; ok {
+		return harness
+	}
+	if f := strings.Fields(command); len(f) > 0 {
+		if _, ok := harnesses[f[0]]; ok {
+			return f[0]
+		}
+	}
+	return "shell"
+}
 
 var sessionName = regexp.MustCompile(`^[A-Za-z0-9_-]{1,32}$`)
 
@@ -47,7 +114,18 @@ func (t *terminals) writeConf() error {
 	if err := os.MkdirAll(strings.TrimSuffix(t.conf, "/tmux.conf"), 0o755); err != nil {
 		return err
 	}
-	return os.WriteFile(t.conf, []byte(tmuxConf), 0o644)
+	if err := os.WriteFile(t.conf, []byte(tmuxConf), 0o644); err != nil {
+		return err
+	}
+	// A tmux server from an older agent keeps running: give it the new options and bindings.
+	if _, err := t.run("source-file", t.conf); err != nil && !noServer(err) {
+		return err
+	}
+	return nil
+}
+
+func noServer(err error) bool {
+	return strings.Contains(err.Error(), "no server running") || strings.Contains(err.Error(), "error connecting")
 }
 
 func (t *terminals) cmd(args ...string) (*exec.Cmd, error) {
@@ -90,7 +168,7 @@ func (t *terminals) list() ([]sessionInfo, error) {
 		"#{session_name}\t#{session_created}\t#{session_attached}\t#{pane_current_path}\t#{pane_current_command}")
 	sessions := []sessionInfo{}
 	if err != nil {
-		if strings.Contains(err.Error(), "no server running") || strings.Contains(err.Error(), "error connecting") {
+		if noServer(err) {
 			return sessions, nil
 		}
 		return nil, err
@@ -140,6 +218,7 @@ func handleTerminalOpen(ctx context.Context, c *conn, raw json.RawMessage, ch *c
 		Cols    int    `json:"cols"`
 		Rows    int    `json:"rows"`
 		Command string `json:"command"`
+		Harness string `json:"harness"`
 	}
 	if err := json.Unmarshal(raw, &p); err != nil || !sessionName.MatchString(p.Session) {
 		return nil, nil, perr("bad_request", "session must match [A-Za-z0-9_-]{1,32}")
@@ -150,17 +229,19 @@ func handleTerminalOpen(ctx context.Context, c *conn, raw json.RawMessage, ch *c
 	p.Cols, p.Rows = clamp(p.Cols, 80), clamp(p.Rows, 24)
 	t := currentTerminals()
 	created := false
-	var scrollback string
+	harness := harnessFor(p.Harness, p.Command)
 	if t.has(p.Session) {
-		out, err := t.run("capture-pane", "-p", "-e", "-J", "-S", "-5000", "-t", "="+p.Session+":")
-		if err == nil {
-			scrollback = strings.ReplaceAll(strings.TrimRight(out, "\n"), "\n", "\r\n") + "\r\n"
-		}
+		harness = t.prepareAttach(p.Session)
 	} else {
 		args := []string{"new-session", "-d", "-s", p.Session, "-c", p.Cwd, "-x", strconv.Itoa(p.Cols), "-y", strconv.Itoa(p.Rows)}
+		for _, e := range harnesses[harness].env {
+			args = append(args, "-e", e)
+		}
 		if p.Command != "" {
 			args = append(args, p.Command)
 		}
+		args = append(args, ";", "set-option", "-t", "="+p.Session+":", "@daemons_harness", harness,
+			";", "set-option", "-t", "="+p.Session+":", "@daemons_scroll", harnesses[harness].scroll)
 		if _, err := t.run(args...); err != nil && !t.has(p.Session) {
 			return nil, nil, perr("internal", "%v", err)
 		}
@@ -173,15 +254,61 @@ func handleTerminalOpen(ctx context.Context, c *conn, raw json.RawMessage, ch *c
 	ch.term.Store(tc)
 	after := func() {
 		go pumpTerminalInput(ch, tc)
-		go func() {
-			if scrollback != "" {
-				sendChunks(ch, kindTerminal, []byte(scrollback))
-			}
-			pumpTerminalOutput(c, ch, tc, t)
-		}()
+		go pumpTerminalOutput(c, ch, tc, t)
 	}
-	return M{"created": created}, after, nil
+	return M{"created": created, "harness": harness, "scroll": harnesses[harness].scroll}, after, nil
 }
+
+// prepareAttach returns an existing session's harness and, like the old gateway, clears mouse
+// modes a crashed TUI left on a pane that is back at its shell (taps would type garbage).
+func (t *terminals) prepareAttach(session string) string {
+	out, err := t.run("display-message", "-p", "-t", "="+session+":", "#{@daemons_harness}\t#{pane_current_command}\t#{pane_tty}")
+	f := strings.Split(strings.TrimSpace(out), "\t")
+	if err != nil || len(f) != 3 {
+		return "shell"
+	}
+	switch f[1] {
+	case "bash", "sh", "zsh", "dash":
+		if strings.HasPrefix(f[2], "/dev/") {
+			os.WriteFile(f[2], []byte("\x1b[?1003l\x1b[?1002l\x1b[?1000l\x1b[?1006l"), 0)
+		}
+	}
+	if _, ok := harnesses[f[0]]; ok {
+		return f[0]
+	}
+	return "shell"
+}
+
+// handleTerminalCapture returns a session's recent history as plain text (the browser's
+// "Select" sheet; tmux holds the scrollback, the browser only sees the screen).
+func handleTerminalCapture(_ context.Context, _ *conn, raw json.RawMessage, _ *channel) (M, func(), error) {
+	var p struct {
+		Session string `json:"session"`
+		Lines   int    `json:"lines"`
+	}
+	json.Unmarshal(raw, &p)
+	t := currentTerminals()
+	if !sessionName.MatchString(p.Session) || !t.has(p.Session) {
+		return nil, nil, perr("not_found", "no session %q", p.Session)
+	}
+	if p.Lines <= 0 {
+		p.Lines = 2000
+	}
+	out, err := t.run("capture-pane", "-p", "-J", "-S", "-"+strconv.Itoa(min(p.Lines, 10000)), "-t", "="+p.Session+":")
+	if err != nil {
+		return nil, nil, err
+	}
+	out = strings.TrimRight(out, " \n")
+	if len(out) > maxCapture {
+		out = out[len(out)-maxCapture:]
+		if i := strings.IndexByte(out, '\n'); i >= 0 {
+			out = out[i+1:]
+		}
+	}
+	return M{"text": out}, nil, nil
+}
+
+const maxCapture = 512 << 10
 
 // attach starts a tmux attach client on a fresh PTY owned by user dev.
 func (t *terminals) attach(session string, cols, rows int) (*termClient, error) {
@@ -247,17 +374,6 @@ func pumpTerminalInput(ch *channel, tc *termClient) {
 			}
 		}
 	}
-}
-
-func sendChunks(ch *channel, kind byte, b []byte) error {
-	for len(b) > 0 {
-		n := min(len(b), maxPayload)
-		if err := ch.send(kind, b[:n]); err != nil {
-			return err
-		}
-		b = b[n:]
-	}
-	return nil
 }
 
 func clamp(v, def int) int {

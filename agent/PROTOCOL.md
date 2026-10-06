@@ -115,15 +115,43 @@ Error codes: `bad_request`, `not_found`, `exists`, `conflict`, `forbidden` (perm
 ### Terminals (06)
 
 Every terminal is a tmux session of user `dev` on the agent's own tmux server
-(`tmux -L daemons -f /etc/daemons/tmux.conf`, which the agent writes: status bar off, no
-alternate screen so scrollback reaches the browser, `escape-time 0`, `history-limit 50000`,
-`default-terminal xterm-256color`, mouse off). Environment: `HOME=/home/dev`, `USER=dev`,
-`SHELL=/bin/bash`, `TERM=xterm-256color`, `LANG=C.UTF-8`.
+(`tmux -L daemons -f /etc/daemons/tmux.conf`, which the agent writes and re-sources into a running
+server when it changed). The design follows the old daemons-run gateway (tag `pre-pivot-2026-09-05`,
+`gateway/src/tmux.js`): **tmux owns the scrollback**. The browser shows tmux's screen (tmux uses
+the alternate screen, so the browser has no scrollback of its own); scrolling enters tmux copy mode.
+Config: status bar off, `escape-time 0`, `history-limit 50000`, `default-terminal xterm-256color`,
+`mouse on` (the browser sends mouse wheel reports), `allow-passthrough on`, `terminal-overrides
+,*:Tc`, `destroy-unattached off`, `window-size latest`, and these bindings:
+
+- `WheelUpPane`: in copy mode, scroll; else if the session's `@daemons_scroll` is `copy-mode` or
+  the pane is not on the alternate screen, enter copy mode (`copy-mode -e`, leaves at the bottom)
+  and scroll up; else send page keys to the application (`C-M-b` for OpenCode, `PageUp` otherwise).
+- `WheelDownPane`: in copy mode, scroll; on the alternate screen of a `page-keys` session, send
+  `C-M-f` (OpenCode) or `PageDown`.
+- `PageUp`/`PageDown` (root table): in a `copy-mode` session, page through history; otherwise sent
+  to the application.
+- Copy-mode tables (`copy-mode`, `copy-mode-vi`): typing (`Any`, Enter, Escape, Tab, arrows,
+  Ctrl+letters and the tables' own letter keys) leaves copy mode and passes the key on, so input
+  always reaches the application. Mouse and page keys keep scrolling.
+
+Each session has a **harness**, chosen when it is created and stored as tmux user options
+`@daemons_harness` and `@daemons_scroll` (bindings are server-global, so they read them):
+
+| harness | `@daemons_scroll` | extra |
+|---|---|---|
+| `claude` | `copy-mode` | environment `CLAUDE_CODE_DISABLE_ALTERNATE_SCREEN=1`, so the transcript lands in tmux history |
+| `codex` | `copy-mode` | |
+| `opencode` | `page-keys` | wheel sends `C-M-b` / `C-M-f` (OpenCode's transcript page keys) |
+| `shell` | `page-keys` | a pane not on the alternate screen scrolls in copy mode |
+
+Environment: `HOME=/home/dev`, `USER=dev`, `SHELL=/bin/bash`, `TERM=xterm-256color`,
+`LANG=C.UTF-8`.
 
 | Type | Direction | Params → result |
 |---|---|---|
 | `terminal.list` | CP → agent | → `sessions: [{name, created (unix s), attached (int), cwd, command}]` |
-| `terminal.open` | CP → agent | `channel, session, cwd` (default `/projects`), `cols, rows, command` (optional, only used when the session is created) → `created: bool`. Creates the session if missing, then attaches a PTY client to it on `channel`. Before attaching to an existing session the agent sends its scrollback (`capture-pane -p -e -J -S -5000`) as terminal bytes. |
+| `terminal.open` | CP → agent | `channel, session, cwd` (default `/projects`), `cols, rows, command, harness` (both optional, only used when the session is created; `harness` is `claude`, `codex`, `opencode` or `shell`; without it the agent derives it from the command's first word, else `shell`) → `created: bool, harness, scroll` (`copy-mode` or `page-keys`; for an existing session, the harness it was created with, `shell` for sessions without one). Creates the session if missing, then attaches a PTY client to it on `channel`; tmux redraws the screen on attach. |
+| `terminal.capture` | CP → agent | `session, lines` (default 2000, max 10000) → `text`: the session's recent history and screen as plain text (`capture-pane -p -J`), at most 512 KiB (the newest part). For the browser's "Select" sheet. |
 | `terminal.resize` | CP → agent | `channel, cols, rows` → ok |
 | `terminal.close` | CP → agent | `channel` → ok. **Detaches** (kills the attach client); the session keeps running. |
 | `terminal.kill` | CP → agent | `session` → ok. Kills the tmux session and every client attached to it. |

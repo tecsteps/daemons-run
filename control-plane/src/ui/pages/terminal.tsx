@@ -6,12 +6,15 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router';
 import { ConfirmDestructive } from '@/components/ConfirmDestructive';
 import { TerminalKeyRow } from '@/components/TerminalKeyRow';
-import { defaultFontSize, FONT_SIZES, TerminalView, type ConnectionState, type TerminalHandle } from '@/components/TerminalView';
+import { TerminalView, type ConnectionState, type TerminalHandle } from '@/components/TerminalView';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { api } from '@/lib/api';
+import { copyToClipboard } from '@/lib/clipboard';
+import { clampFontSize, defaultFontSize, resetFontSize } from '@/lib/terminalFont';
+import { openHttpUrl } from '@/lib/terminalLinks';
 import { clockTime } from '@/lib/time';
 import { AGENT_LABELS, type ServerView } from '@/lib/types';
 import { cn } from '@/lib/utils';
@@ -68,6 +71,7 @@ export function TerminalPage() {
   const [fontSize, setFontSize] = useState(defaultFontSize);
   const [immersive, setImmersive] = useState(false);
   const [selectText, setSelectText] = useState<string | null>(null);
+  const [link, setLink] = useState<string | null>(null);
   const [closing, setClosing] = useState<string | null>(null);
   const [renaming, setRenaming] = useState<string | null>(null);
   const [newName, setNewName] = useState('');
@@ -136,7 +140,7 @@ export function TerminalPage() {
   });
 
   const changeFont = (delta: number | null) => {
-    const next = delta === null ? (phone ? 12 : 14) : Math.min(FONT_SIZES.max, Math.max(FONT_SIZES.min, fontSize + delta));
+    const next = delta === null ? resetFontSize() : clampFontSize(fontSize + delta);
     setFontSize(next);
     termRef.current?.setFontSize(next);
   };
@@ -294,6 +298,8 @@ export function TerminalPage() {
             onCtrlUsed={() => setCtrl(false)}
             onState={setState}
             fontSize={fontSize}
+            onLink={setLink}
+            onFontSize={setFontSize}
           />
         ) : sessions.isLoading ? null : (
           <div data-testid="terminal-quick-start" className="m-auto flex w-full max-w-md flex-col items-center gap-4 p-6 text-center">
@@ -341,7 +347,10 @@ export function TerminalPage() {
               .then((text) => text && termRef.current?.paste(text))
               .catch(() => undefined);
           }}
-          onSelect={() => setSelectText(termRef.current?.selectionText() ?? '')}
+          onSelect={() => {
+            setSelectText('Loading…');
+            void termRef.current?.selectionText().then(setSelectText);
+          }}
           onHideKeyboard={() => termRef.current?.blur()}
         />
       ) : null}
@@ -368,6 +377,37 @@ export function TerminalPage() {
             >
               <Check />
               Copy {window.getSelection()?.toString() ? 'selection' : 'all'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={link !== null} onOpenChange={(o) => !o && setLink(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Link</DialogTitle>
+          </DialogHeader>
+          <p data-testid="terminal-link-url" className="font-mono text-caption break-all text-muted">
+            {link}
+          </p>
+          <DialogFooter>
+            <Button
+              variant="secondary"
+              onClick={() => {
+                if (link) void copyToClipboard(link);
+                setLink(null);
+              }}
+            >
+              Copy
+            </Button>
+            <Button
+              data-testid="terminal-link-open"
+              onClick={() => {
+                if (link) openHttpUrl(link);
+                setLink(null);
+              }}
+            >
+              Open
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -50,7 +50,7 @@ func TestTerminals(t *testing.T) {
 	}
 
 	r := c.call("c1", M{"type": "terminal.open", "channel": 1, "session": "work", "cwd": dir, "cols": 100, "rows": 30})
-	if r["ok"] != true || r["created"] != true {
+	if r["ok"] != true || r["created"] != true || r["harness"] != "shell" || r["scroll"] != "page-keys" {
 		t.Fatalf("open: %v", r)
 	}
 	c.sendFrame(kindTerminal, 1, []byte("echo marker-$((40+2))\r"))
@@ -65,7 +65,30 @@ func TestTerminals(t *testing.T) {
 		t.Fatalf("resize: %v", r)
 	}
 
-	// Detach, then reattach: the session survives and its scrollback comes first.
+	// tmux owns the history: a wheel report scrolls it in copy mode, typing leaves copy mode.
+	c.sendFrame(kindTerminal, 1, []byte("seq -f row-%g 1 300\r"))
+	output(1, "row-300")
+	tmux := func(args ...string) string {
+		out, _ := terms.run(args...)
+		return strings.TrimSpace(out)
+	}
+	for range 3 {
+		c.sendFrame(kindTerminal, 1, []byte("\x1b[<64;10;10M"))
+	}
+	waitFor(t, func() bool { return tmux("display", "-p", "-t", "=work:", "#{pane_in_mode}") == "1" })
+	if top := tmux("display", "-p", "-t", "=work:", "#{scroll_position}"); top == "" || top == "0" {
+		t.Fatalf("wheel did not scroll the history: scroll_position %q", top)
+	}
+	c.sendFrame(kindTerminal, 1, []byte("e"))
+	waitFor(t, func() bool { return tmux("display", "-p", "-t", "=work:", "#{pane_in_mode}") == "0" })
+	c.sendFrame(kindTerminal, 1, []byte("cho left-copy-mode\r"))
+	output(1, "left-copy-mode")
+	cap := c.call("c2b", M{"type": "terminal.capture", "session": "work", "lines": 500})
+	if text, _ := cap["text"].(string); !strings.Contains(text, "row-1\n") || !strings.Contains(text, "left-copy-mode") {
+		t.Fatalf("capture: %v", cap)
+	}
+
+	// Detach, then reattach: the session survives and tmux redraws its screen.
 	if r := c.call("c4", M{"type": "terminal.close", "channel": 1}); r["ok"] != true {
 		t.Fatalf("close: %v", r)
 	}
@@ -73,7 +96,34 @@ func TestTerminals(t *testing.T) {
 	if r["created"] != false {
 		t.Fatalf("reopen: %v", r)
 	}
-	output(2, "marker-42")
+	output(2, "left-copy-mode")
+
+	// A coding agent's harness is stored on its session and returned on every attach.
+	r = c.call("c5b", M{"type": "terminal.open", "channel": 4, "session": "agent", "cwd": dir, "command": "bash", "harness": "claude"})
+	if r["harness"] != "claude" || r["scroll"] != "copy-mode" {
+		t.Fatalf("open claude: %v", r)
+	}
+	if env := tmux("show-environment", "-t", "=agent", "CLAUDE_CODE_DISABLE_ALTERNATE_SCREEN"); env != "CLAUDE_CODE_DISABLE_ALTERNATE_SCREEN=1" {
+		t.Fatalf("claude env: %q", env)
+	}
+	c.call("c5c", M{"type": "terminal.close", "channel": 4})
+	if r := c.call("c5d", M{"type": "terminal.open", "channel": 5, "session": "agent"}); r["harness"] != "claude" || r["created"] != false {
+		t.Fatalf("reopen claude: %v", r)
+	}
+	c.call("c5e", M{"type": "terminal.kill", "session": "agent"})
+
+	// OpenCode on the alternate screen gets its own page keys (C-M-b) for the wheel.
+	c.call("c5f", M{"type": "terminal.open", "channel": 6, "session": "oc", "cwd": dir, "command": "bash", "harness": "opencode"})
+	c.sendFrame(kindTerminal, 6, []byte("printf '\\e[?1049h'; stty -echo; cat -v\r"))
+	waitFor(t, func() bool {
+		return tmux("display", "-p", "-t", "=oc:", "#{alternate_on}#{pane_current_command}") == "1cat"
+	})
+	c.sendFrame(kindTerminal, 6, []byte("\x1b[<64;10;10M\r"))
+	output(6, "^[^B")
+	c.call("c5g", M{"type": "terminal.kill", "session": "oc"})
+	if _, err := terms.run("source-file", terms.conf); err != nil {
+		t.Fatalf("tmux.conf does not load cleanly: %v", err)
+	}
 
 	if r := c.call("c6", M{"type": "terminal.open", "channel": 3, "session": "bad name!"}); r["ok"] != false {
 		t.Fatalf("bad session name accepted: %v", r)
@@ -87,6 +137,27 @@ func TestTerminals(t *testing.T) {
 	exit := c.waitFor(func(m msg) bool { return m.m["type"] == "terminal.exit" }).m
 	if exit["channel"] != 2.0 || exit["session"] != "renamed" || exit["session_ended"] != true {
 		t.Fatalf("exit: %v", exit)
+	}
+}
+
+func waitFor(t *testing.T, ok func() bool) {
+	t.Helper()
+	for deadline := time.Now().Add(5 * time.Second); !ok(); {
+		if time.Now().After(deadline) {
+			t.Fatal("condition not met in 5s")
+		}
+		time.Sleep(50 * time.Millisecond)
+	}
+}
+
+func TestHarnessFor(t *testing.T) {
+	for _, tc := range [][3]string{
+		{"claude", "", "claude"}, {"", "codex --yolo", "codex"}, {"", "opencode", "opencode"},
+		{"", "htop", "shell"}, {"nope", "", "shell"}, {"", "", "shell"},
+	} {
+		if got := harnessFor(tc[0], tc[1]); got != tc[2] {
+			t.Errorf("harnessFor(%q, %q) = %q, want %q", tc[0], tc[1], got, tc[2])
+		}
 	}
 }
 

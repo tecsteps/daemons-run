@@ -1,5 +1,6 @@
 // Adapted from old daemons-run resources/js/components/TerminalKeyRow.tsx
 import { ClipboardPaste, Keyboard, TextSelect } from 'lucide-react';
+import { useRef } from 'react';
 import { KEY } from '@/lib/terminalKeys';
 import { cn } from '@/lib/utils';
 
@@ -36,6 +37,14 @@ export function TerminalKeyRow({
   onSelect: () => void;
   onHideKeyboard: () => void;
 }) {
+  // iOS Safari can deliver one tap as two clicks: a second Ctrl toggle within 350 ms is the same tap.
+  const lastCtrl = useRef(-Infinity);
+  const toggleCtrl = () => {
+    const now = performance.now();
+    if (now - lastCtrl.current < 350) return;
+    lastCtrl.current = now;
+    onCtrl(!ctrl);
+  };
   return (
     <fieldset
       data-testid="terminal-key-row"
@@ -56,7 +65,7 @@ export function TerminalKeyRow({
             onMouseDown={(e) => e.preventDefault()}
             onClick={(e) => {
               e.preventDefault();
-              if (key.id === 'ctrl') onCtrl(!ctrl);
+              if (key.id === 'ctrl') toggleCtrl();
               else if (key.id === 'paste') onPaste();
               else if (key.id === 'select') onSelect();
               else if (key.id === 'hide') onHideKeyboard();

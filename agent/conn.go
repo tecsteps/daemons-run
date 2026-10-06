@@ -227,17 +227,18 @@ func init() {
 		"system.info": func(context.Context, *conn, json.RawMessage, *channel) (M, func(), error) {
 			return systemInfo(), nil, nil
 		},
-		"exec":            handleExec,
-		"ports.list":      handlePorts,
-		"terminal.list":   handleTerminalList,
-		"terminal.open":   handleTerminalOpen,
-		"terminal.resize": handleTerminalResize,
-		"terminal.close":  handleTerminalClose,
-		"terminal.kill":   handleTerminalKill,
-		"terminal.rename": handleTerminalRename,
-		"http.request":    handleHTTPRequest,
-		"ws.open":         handleWSOpen,
-		"file.archive":    handleFileArchive,
+		"exec":             handleExec,
+		"ports.list":       handlePorts,
+		"terminal.list":    handleTerminalList,
+		"terminal.open":    handleTerminalOpen,
+		"terminal.resize":  handleTerminalResize,
+		"terminal.close":   handleTerminalClose,
+		"terminal.kill":    handleTerminalKill,
+		"terminal.capture": handleTerminalCapture,
+		"terminal.rename":  handleTerminalRename,
+		"http.request":     handleHTTPRequest,
+		"ws.open":          handleWSOpen,
+		"file.archive":     handleFileArchive,
 	}
 	for _, t := range fileOpTypes {
 		handlers[t] = handleFileOp

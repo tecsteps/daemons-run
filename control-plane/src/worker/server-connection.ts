@@ -41,6 +41,12 @@ type HttpStream = {
   started: boolean;
 };
 
+/** The session's harness (agent/PROTOCOL.md "Terminals"), from the command a quick start sends. */
+export function terminalHarness(command: string | null | undefined): 'claude' | 'codex' | 'opencode' | 'shell' {
+  const program = command?.trim().split(/\s+/)[0]?.split('/').pop();
+  return program === 'claude' || program === 'codex' || program === 'opencode' ? program : 'shell';
+}
+
 export function frame(kind: number, channel: number, payload: Uint8Array): Uint8Array {
   const out = new Uint8Array(5 + payload.byteLength);
   out[0] = kind;
@@ -232,11 +238,14 @@ export class ServerConnection extends DurableObject<Env> {
       rows: Number(url.searchParams.get('rows') ?? 24),
     };
     if (url.searchParams.get('cwd')) params.cwd = url.searchParams.get('cwd');
-    if (url.searchParams.get('command')) params.command = url.searchParams.get('command');
+    const command = url.searchParams.get('command');
+    if (command) params.command = command;
+    params.harness = terminalHarness(command);
     const browser = pair[1];
     this.ctx.waitUntil(
       this.request('terminal.open', params).then(
-        (reply) => this.sendJson(browser, { type: 'opened', created: reply.created ?? false }),
+        (reply) =>
+          this.sendJson(browser, { type: 'opened', created: reply.created ?? false, harness: reply.harness ?? 'shell', scroll: reply.scroll ?? 'page-keys' }),
         (error: AgentError) => browser.close(4004, error.message.slice(0, 120)),
       ),
     );
@@ -252,9 +261,16 @@ export class ServerConnection extends DurableObject<Env> {
     if (a.role === 'terminal') {
       if (!agent) return ws.close(4001, 'The server is offline.');
       if (typeof message === 'string') {
-        const msg = JSON.parse(message) as { type: string; cols?: number; rows?: number; t?: number };
+        const msg = JSON.parse(message) as { type: string; cols?: number; rows?: number; t?: number; lines?: number };
         if (msg.type === 'ping') {
           ws.send(JSON.stringify({ type: 'pong', t: msg.t }));
+          return;
+        }
+        if (msg.type === 'capture') {
+          // tmux holds the scrollback; the "Select" sheet asks for it here.
+          const lines = Math.min(10_000, Math.max(1, Number(msg.lines) || 2000));
+          const reply = await this.request('terminal.capture', { session: a.session, lines }).catch((error: AgentError) => ({ text: '', error: error.message }));
+          this.sendJson(ws, { type: 'capture', text: (reply as { text?: string }).text ?? '' });
           return;
         }
         if (msg.type === 'resize') {
