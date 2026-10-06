@@ -3,7 +3,7 @@
   "private": true,
   "license": "MIT",
   "type": "module",
-  "workspaces": ["control-plane", "apps-gateway"],
+  "workspaces": ["control-plane", "apps-gateway", "website"],
   "scripts": {
     "dev": "npm run dev -w control-plane",
     "build": "npm run build --workspaces --if-present",

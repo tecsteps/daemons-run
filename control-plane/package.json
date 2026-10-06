@@ -4,12 +4,13 @@
   "type": "module",
   "scripts": {
     "dev": "npm run build:ui && concurrently -k \"vite build --watch --mode development\" \"wrangler dev --local\"",
-    "build": "npm run sync-installer && npm run build:ui",
+    "build": "vite build",
     "build:ui": "vite build",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "test": "vitest run",
     "lint": "tsc --noEmit -p tsconfig.json",
-    "sync-installer": "cp ../installer/install.sh ../installer/cloud-init.yaml.tmpl src/worker/generated/"
+    "sync-installer": "cp ../installer/install.sh ../installer/cloud-init.yaml.tmpl src/worker/generated/",
+    "deploy": "wrangler d1 migrations apply DB --remote && wrangler deploy"
   },
   "dependencies": {
     "@simplewebauthn/server": "^13.3.3",
@@ -46,5 +47,22 @@
     "vite": "^8.3.3",
     "vitest": "^4.1.11",
     "wrangler": "^4.147.0"
+  },
+  "description": "daemons.run control plane: your servers, terminals and apps, in your own Cloudflare account.",
+  "cloudflare": {
+    "label": "daemons.run control plane",
+    "products": [
+      "Workers",
+      "D1",
+      "Durable Objects"
+    ],
+    "categories": [
+      "developer-tools"
+    ],
+    "bindings": {
+      "SETUP_CODE": {
+        "description": "Any phrase you will type **once**, when you register your first passkey on your new control plane. Changing it later lets you set up new passkeys and revokes all others."
+      }
+    }
   }
 }

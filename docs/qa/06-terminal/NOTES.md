@@ -15,3 +15,7 @@ Suite `e2e/06-terminal.spec.ts` with `AGENT_CONTAINER` = an `ubuntu:24.04` conta
 - Fixed on the way: a stale socket's close handler cleared the live socket (input lost); tab switching kept the old "connected" state.
 
 Still open: a real Hetzner server, Claude Code login and TUI, latency in Europe, iOS Simulator and Android emulator checks.
+
+## 2026-10-06, real Hetzner CAX11 (nbg1) via daemons-dev
+
+- Terminal attaches, commands run as `dev` in `/projects`. Status line showed 146 ms (desktop) and 174 ms (phone emulation) browser↔Durable Object round trip: above the < 50 ms target; to be investigated.
