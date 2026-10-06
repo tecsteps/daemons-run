@@ -39,6 +39,7 @@ npm workspaces for `control-plane/`, `apps-gateway/`, `website/`; Go module in `
 
 - A tag `vX.Y.Z` builds `daemons-agent` for linux amd64 and arm64, writes `SHA256SUMS`, and publishes a GitHub release with them and `install.sh`.
 - The control plane serves `install.sh` pinned to its own release version, so a control plane and the agents it installs always match (05).
+- Before the first tagged release, CI publishes a rolling `dev` pre-release from every push to `main` (agent binaries + `SHA256SUMS`); development control planes install from it.
 - Release notes from merged pull requests; semantic versioning; a `CHANGELOG.md` only once there are users.
 
 ### GitHub settings

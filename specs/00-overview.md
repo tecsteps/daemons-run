@@ -73,6 +73,12 @@ specs/           these epics
 
 Look and feel, mascot images, brand and many UI components come from the old project (`/Users/wesner/Herd/daemons-run`). **[ui-reference.md](ui-reference.md) maps each epic to the exact files to reuse** and lists what not to take. We take the look and small proven components, never the architecture.
 
+## Development setup
+
+- Development control plane: Worker `daemons-dev` (`https://daemons-dev.fabian-wesner.workers.dev`, apps gateway `daemons-apps-dev`). The names `daemons` / `daemons-apps` stay free for testing a real fresh install (03).
+- Test servers: Hetzner only, at most one at a time, a size under €10/month, label `daemons-dev`. Never touch servers without that label.
+- Credentials for development live in the git-ignored `.env` (`CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`, `HETZNER_API_KEY`).
+
 ## Rules for every epic
 
 - **UX first.** Every epic names the screen states: empty, loading, error, success. No dead ends; every error says what to do next.
