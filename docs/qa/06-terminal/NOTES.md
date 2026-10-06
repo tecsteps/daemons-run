@@ -58,3 +58,8 @@ bindings, `config/agents.php` scroll modes, `TerminalSession.tsx` gestures, `ter
 - Deviation from the old project: touch drags in copy-mode harnesses and shells send one wheel report per 5 rows
   (the text follows the finger) instead of 8 PageUp keys per swipe; OpenCode keeps one report (one page) per swipe.
   The shell rule is "not on the alternate screen → copy mode" (old: "a shell process and not on the alternate screen").
+
+## 2026-10-06 21:55, after the terminal port: real servers with the new agent (dev-7662e47)
+
+- **Android emulator (Pixel 8, Chrome), dev-arm-2:** `node e2e/mobile/android.mjs dev-arm-2` passed with real taps and keyboard: keyboard resizes the terminal, IME typing, sticky Ctrl + c, ↑ history, shell scrollback by swipe (back to row 206), typing leaves scroll mode, Select shows the tmux history, landscape without overflow, background 15 s and return reattaches, OpenCode (free model) transcript scrolled from item 32 to 1, Claude Code welcome screen renders and reattaches. 34–49 ms. Screens: `android-*.png`.
+- **iOS Simulator (iPhone 17 Pro, Safari), dev-x86-1:** layout, terminal, typing, projects, apps, settings fine, no overflow (`ios-*.png`). Safari's WebDriver in the Simulator delivers incomplete tap sequences (a probe button got only pointerdown+touchstart in one run and nothing in another), so key-row taps cannot be verified there; they are verified on Android. **Manual check on a real iPhone needed:** Add a phone → passkey, sticky Ctrl, Select sheet.
