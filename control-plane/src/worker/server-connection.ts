@@ -58,6 +58,7 @@ export class ServerConnection extends DurableObject<Env> {
   private pending = new Map<string, { resolve: (r: Reply) => void; timer: ReturnType<typeof setTimeout> }>();
   private http = new Map<number, HttpStream>();
   private requestSeq = 0;
+  private lastAgentMessage = 0;
 
   constructor(ctx: DurableObjectState, env: Env) {
     super(ctx, env);
@@ -94,9 +95,18 @@ export class ServerConnection extends DurableObject<Env> {
     if (!agent) throw new AgentError('offline', 'The server is offline.');
     const id = `c${Date.now().toString(36)}${(this.requestSeq++).toString(36)}`;
     return new Promise<Reply>((resolve, reject) => {
+      const sentAt = Date.now();
       const timer = setTimeout(() => {
         this.pending.delete(id);
         this.sendJson(agent, { type: 'cancel', id });
+        // Nothing at all from the agent since we asked: the socket is dead on its side.
+        // Close it, so the agent reconnects (or the server shows offline) instead of hanging.
+        if (this.lastAgentMessage < sentAt) {
+          try {
+            agent.close(4008, 'The agent did not answer.');
+          } catch {}
+          this.closeBrowsers(4001, 'The server stopped answering. Reconnecting…');
+        }
         reject(new AgentError('timeout', 'The server did not answer in time.'));
       }, timeoutMs);
       this.pending.set(id, {
@@ -129,8 +139,15 @@ export class ServerConnection extends DurableObject<Env> {
     const agent = this.agentSocket();
     if (!agent) return { connected: false, connectedAt: null, lastHeartbeat: null };
     const attachment = agent.deserializeAttachment() as Extract<Attachment, { role: 'agent' }>;
-    const beat = this.ctx.getWebSocketAutoResponseTimestamp(agent)?.getTime() ?? attachment.connectedAt;
-    return { connected: now() - beat < HEARTBEAT_STALE, connectedAt: attachment.connectedAt, lastHeartbeat: beat };
+    const beat = Math.max(this.ctx.getWebSocketAutoResponseTimestamp(agent)?.getTime() ?? 0, attachment.connectedAt, this.lastAgentMessage);
+    const connected = now() - beat < HEARTBEAT_STALE;
+    if (!connected) {
+      // No heartbeat for 90 s: drop the socket so a live agent reconnects cleanly.
+      try {
+        agent.close(4008, 'No heartbeat.');
+      } catch {}
+    }
+    return { connected, connectedAt: attachment.connectedAt, lastHeartbeat: beat };
   }
 
   /** Disconnect: closes the agent socket (its credential is revoked by the caller). */
@@ -285,6 +302,7 @@ export class ServerConnection extends DurableObject<Env> {
   }
 
   private async onAgentMessage(ws: WebSocket, a: Extract<Attachment, { role: 'agent' }>, message: string | ArrayBuffer) {
+    this.lastAgentMessage = Date.now();
     if (typeof message !== 'string') {
       const { kind, channel, payload } = parseFrame(message);
       if (kind === KIND_TERMINAL) {

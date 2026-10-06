@@ -1,0 +1,4 @@
+# 05 — VM installer and agent: QA notes
+
+- 2026-10-06: installer tested in `ubuntu:24.04` (`installer/test/run.sh`: fresh install, rerun without changes, broken release URL reports `failed`), and for real on Hetzner CAX11 (see 04 notes): Online in 131 s, no listener added.
+- 2026-10-06 incident: after a control plane deploy, dev-arm-1 stayed "offline": the Durable Object still held a socket, requests timed out, and the agent never reconnected (no `/agent/connect` in `wrangler tail`). Root cause not found (no SSH key on that server). Fix: the Durable Object now closes an agent socket that gives no answer to a request or has no heartbeat for 90 s, so a live agent reconnects. After the next deploy the server came back by itself; a further redeploy kept requests answering (154–219 ms). Dev servers now get an SSH key (Settings) for diagnosis.
