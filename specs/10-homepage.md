@@ -14,7 +14,7 @@ Reuse from the old project: [ui-reference.md](ui-reference.md), sections "Homepa
 
 ## Scope
 
-- Static site, the old homepage's look: always dark, cinematic, 3D mascot art, lime CTAs, black and bone stripes. Same images.
+- Astro static site (no client JavaScript except the mobile menu), the old homepage's look: always dark, cinematic, 3D mascot art, lime CTAs, black and bone stripes. Same images.
 - Header: mark + wordmark, GitHub link (visible on mobile too), **Install** CTA.
 - Hero: "Your agents never sleep." (or the old "A development machine that never turns off."), the server cabinet art, **Install** + "Install with your coding agent".
 - Sections (one idea each):

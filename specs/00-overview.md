@@ -50,13 +50,18 @@ Order of delivery: 12 (repo basics) → 01 (including a minimal install script) 
 | Part | Choice | Why |
 |---|---|---|
 | Control plane API | TypeScript Worker, Hono | Small, native to Workers |
-| Control plane UI | React + Vite, Tailwind v4, served as Workers static assets | Reuses the old look and feel |
+| Control plane UI | React 19 single-page app built with Vite, served as Workers static assets | Reuses the old look and feel |
+| UI routing | React Router, plain client-side mode (owner, 2026-10-06) | Widely known, enough for ~10 screens |
+| UI server data | TanStack Query for `/api/*`; WebSockets for live data (owner, 2026-10-06) | Caching, refetch, loading and error states for free |
+| UI styling and parts | Tailwind v4 with the Terminal Lime tokens, shadcn/ui (Radix), lucide-react, Inter + Geist Mono (Fontsource, self-hosted) | Copied from the old project |
+| Terminal and editor | xterm.js 6 (fit, WebGL addons), CodeMirror 6 | Same as the old project |
+| Passkeys | `@simplewebauthn/browser` and `@simplewebauthn/server` | Standard WebAuthn library |
 | Metadata | D1 | Free tier, SQL |
 | VM connections | One Durable Object per server, holding the agent's WebSocket (hibernation API) | Outbound-only from the VM, no inbound ports, free tier |
 | daemons-agent | Go (owner, 2026-10-06), one static binary, also provides the `daemons` CLI | Easy download, solid PTY support |
 | Installer | One POSIX shell script, versioned, served by the control plane | No Ansible, no images |
 | Apps gateway | Second tiny Worker `daemons-apps`, service binding to the control plane | Separate origin for apps (08) |
-| Homepage | Static site on Cloudflare (Workers static assets) | Same stack, no server |
+| Homepage | Astro static site (owner, 2026-10-06) with the same Tailwind tokens, on Cloudflare Workers static assets | Plain HTML, no client JS; components map onto the old Blade components |
 
 ## Repository layout
 
