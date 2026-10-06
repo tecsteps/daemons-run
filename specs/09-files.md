@@ -8,6 +8,10 @@ Browse and edit files on the VM from the browser for quick looks and small fixes
 
 Check a config, fix a typo or drop in an image from your phone. The VM filesystem stays the source of truth.
 
+## UI reference
+
+Reuse from the old project: [ui-reference.md](ui-reference.md), sections "Files".
+
 ## Scope
 
 - Tree and list view rooted at `/projects` (navigate up to `/home/daemon` too); hidden files toggle.

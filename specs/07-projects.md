@@ -11,10 +11,11 @@ One place to see "what am I working on": open the terminal in the right folder, 
 ## Scope
 
 - The **Projects** list is read live from the VM (`/projects/*`), never stored in D1. A project created with `mkdir` in the terminal shows up.
-- Per project: name, server, git branch and last commit, Compose services and their state (`docker compose ps`), exposed apps (08), presence of `CLAUDE.md` / `AGENTS.md`.
+- Per project: name, server, git branch, exposed apps (08).
 - **New project**: name, plus optionally a Git URL to clone. Creates `/projects/<name>`, clones, and opens a terminal there.
-- Project actions: **Open terminal here**, **Start Compose** / **Stop Compose** (only when `compose.yaml` exists), **Expose app** (08), **Delete** (typed-name confirmation; runs `docker compose down` first, then deletes the folder).
-- Git over HTTPS uses whatever credentials the user configures on the VM (e.g. `gh auth login` in the terminal). We do not manage Git tokens.
+- Project actions: **Open terminal here**, **Expose app** (08), **Delete** (typed-name confirmation; runs `docker compose down` first when a Compose file exists, then deletes the folder).
+- Second slice, once the first works: Compose services and their state, **Start Compose** / **Stop Compose**.
+- Git over HTTPS uses whatever credentials the user configures on the VM. We do not manage Git tokens. A failed private clone says so and offers **Open terminal** with `gh auth login` ready to run.
 
 ## Out of scope
 
