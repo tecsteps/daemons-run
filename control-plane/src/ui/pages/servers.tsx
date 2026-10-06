@@ -56,7 +56,7 @@ function ServerCard({ server }: { server: ServerView }) {
         <Eyebrow>Terminal</Eyebrow>
         <div className="flex flex-wrap gap-2">
           {ready ? (
-            <Button asChild variant="secondary" size="sm" className="border-ink-900 bg-ink-900 font-mono text-bone hover:bg-ink-900/90 dark:bg-bone dark:text-ink-950">
+            <Button asChild variant="ink" size="sm">
               <Link to={`/servers/${server.id}/terminal`}>
                 <SquareTerminal />
                 Open terminal

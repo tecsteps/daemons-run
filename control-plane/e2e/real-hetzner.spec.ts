@@ -49,6 +49,14 @@ test('real Hetzner server: create → online → terminal', async ({ page, conte
     await expect(page).toHaveURL(/\/servers\/srv_/);
     server = (await (await page.request.get('/api/servers')).json()).servers.find((s: { name: string }) => s.name === NAME);
   }
+  // A failed install is retried from the UI: Hetzner rebuilds the server with the same user data.
+  const before = (await (await page.request.get(`/api/servers/${server.id}`)).json()).server;
+  if (before.status === 'failed' || before.install.status === 'failed') {
+    await page.goto(`/servers/${server.id}`);
+    await expect(page.getByTestId('install-log')).toBeVisible();
+    await page.getByTestId('retry-install').click();
+    await expect(page.getByTestId('retry-install')).toHaveCount(0, { timeout: 30_000 });
+  }
   const started = Date.now();
   let shotStep = '';
   for (;;) {

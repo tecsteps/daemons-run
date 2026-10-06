@@ -19,6 +19,8 @@ const buttonVariants = cva(
                     'border border-line bg-canvas text-ink-900 hover:bg-surface disabled:border-line disabled:bg-surface disabled:text-muted',
                 outline:
                     'border border-line bg-canvas text-ink-900 hover:bg-surface disabled:border-line disabled:bg-surface disabled:text-muted',
+                // The old dashboard's "Open terminal": ink in light, bone in dark.
+                ink: 'border border-transparent bg-[#11120f] font-mono text-[#f5f1e8] hover:bg-[#11120f]/85 dark:bg-[#f5f1e8] dark:text-[#11120f] dark:hover:bg-[#f5f1e8]/85',
                 quiet: 'border border-transparent bg-transparent text-ink-900 hover:bg-surface disabled:bg-transparent disabled:text-muted',
                 ghost: 'border border-transparent bg-transparent text-ink-900 hover:bg-surface disabled:bg-transparent disabled:text-muted',
                 link: 'border border-transparent bg-transparent text-ink-900 underline-offset-4 hover:underline disabled:bg-transparent disabled:text-muted',

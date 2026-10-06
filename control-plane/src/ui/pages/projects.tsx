@@ -124,7 +124,7 @@ function ProjectCard({ server, project, apps }: { server: ServerView; project: P
       {project.compose && server.status === 'online' ? <ComposeServices server={server} project={project} /> : null}
       <div className="mt-auto flex flex-wrap gap-2">
         {server.status === 'online' ? (
-          <Button asChild size="sm" variant="secondary" className="border-ink-900 bg-ink-900 font-mono text-bone hover:bg-ink-900/90 dark:bg-bone dark:text-ink-950">
+          <Button asChild size="sm" variant="ink">
             <Link to={terminalLink(server.id, project)} data-testid={`open-terminal-${project.name}`}>
               <SquareTerminal />
               Open terminal here
