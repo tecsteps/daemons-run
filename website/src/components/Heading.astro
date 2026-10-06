@@ -1,0 +1,7 @@
+---
+// Adapted from old daemons-run resources/views/components/public/stripe-heading.blade.php
+interface Props { lead?: string; tone?: 'dark' | 'light' }
+const { lead, tone = 'dark' } = Astro.props;
+---
+<h2 class="isolate max-w-3xl text-3xl font-bold tracking-tight text-balance sm:text-4xl lg:text-[2.5rem] lg:leading-[1.08]"><slot /></h2>
+{lead && <p class:list={['mt-5 max-w-2xl text-body text-pretty sm:text-section sm:leading-7', tone === 'dark' ? 'text-bone/75' : 'text-ink-900/80']}>{lead}</p>}

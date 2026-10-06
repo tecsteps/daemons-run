@@ -1,0 +1,35 @@
+---
+// Adapted from old daemons-run resources/views/components/public/footer.blade.php
+import BrandMark from './BrandMark.astro';
+import { GITHUB, DOCS } from './site';
+const heading = 'font-mono text-[11px] font-medium uppercase tracking-[0.14em] text-bone/70';
+const link = 'flex min-h-11 items-center text-[13px] leading-5 text-bone/80 hover:text-bone md:min-h-0';
+---
+<footer class="border-t border-white/10 bg-ink-950 pb-[env(safe-area-inset-bottom,0px)]">
+  <div class="mx-auto flex max-w-6xl flex-col gap-10 px-4 py-14 md:flex-row md:items-start md:justify-between md:px-6">
+    <div class="flex min-w-0 flex-col gap-4">
+      <a href="/" class="inline-flex w-fit items-center gap-2.5 font-mono text-[17px] font-semibold tracking-[-0.06em] text-bone">
+        <BrandMark size={36} />
+        <span>daemons.run</span>
+      </a>
+      <p class="font-mono text-caption leading-5 text-bone/70">
+        Open source · MIT licensed<br />
+        Not affiliated with Cloudflare, Hetzner or any agent vendor.<br />
+        Marks belong to their owners.
+      </p>
+    </div>
+    <div class="grid min-w-0 grid-cols-2 gap-8 md:shrink-0 md:gap-16">
+      <div class="flex flex-col gap-3">
+        <p class={heading}>Project</p>
+        <a href={GITHUB} class={link}>GitHub</a>
+        <a href={DOCS} class={link}>Docs</a>
+        <a href="/install" class={link}>Install</a>
+      </div>
+      <div class="flex flex-col gap-3">
+        <p class={heading}>Legal</p>
+        <a href="https://daemons.run/imprint" class={link}>Imprint</a>
+        <a href="https://daemons.run/privacy" class={link}>Privacy</a>
+      </div>
+    </div>
+  </div>
+</footer>

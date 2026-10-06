@@ -22,7 +22,7 @@ Reuse from the old project: [ui-reference.md](ui-reference.md), sections "Homepa
   2. Your stuff, your accounts: control plane in your Cloudflare, servers in your Hetzner account (or any Ubuntu machine), no SaaS in between.
   3. Your agent: Claude Code, Codex or OpenCode preinstalled; anything else that runs in a terminal works too.
   4. Apps from localhost to a link: `daemons expose 3000`.
-  5. Cost: free and open source (MIT). You pay your server provider directly (Hetzner from about €4/month); normal use fits Cloudflare's free plan (say "normal use", not "always").
+  5. Cost: free and open source (MIT). You pay your server provider directly (Hetzner from about €5.50/month: the cheapest type, CX23, is €5.49 in the API on 2026-10-06); normal use fits Cloudflare's free plan (say "normal use", not "always").
   6. Final CTA with the mascot.
 - `/install` page: the Deploy to Cloudflare button plus the copyable agent prompt (03).
 - `/install.md`: the agent-readable install instructions (03).

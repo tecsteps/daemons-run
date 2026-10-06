@@ -1,0 +1,58 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Icon from '../components/Icon.astro';
+import CopyPrompt from '../components/CopyPrompt.astro';
+import { DEPLOY_URL, DOCS, limeCta } from '../components/site';
+const card = 'rounded-[12px] border border-white/10 bg-white/[0.03] p-5 sm:p-6';
+const label = 'font-mono text-caption tracking-[0.14em] text-lime uppercase';
+---
+<Layout
+  title="Install daemons.run"
+  description="Install your own daemons.run control plane into your Cloudflare account, with the Deploy to Cloudflare button or your coding agent."
+>
+  <section class="mx-auto max-w-3xl px-4 pt-12 pb-20 md:px-6 md:pt-16">
+    <h1 class="text-[2.25rem] leading-[1.05] font-bold tracking-tight sm:text-[3rem]">Install <span class="text-lime">daemons.run</span></h1>
+    <p class="mt-5 max-w-2xl text-[0.9375rem] leading-7 text-bone/75 sm:text-section sm:leading-7">
+      Your control plane goes into your own Cloudflare account, at <code class="font-mono text-bone">daemons.&lt;you&gt;.workers.dev</code>. Pick one of two ways. Both take about five minutes.
+    </p>
+
+    <div class="mt-10 grid gap-5">
+      <div id="deploy" class={card}>
+        <p class={label}>Option 1 · In the browser</p>
+        <h2 class="mt-2 text-2xl font-bold">Deploy to Cloudflare</h2>
+        <p class="mt-3 text-[0.9375rem] leading-6 text-bone/75">
+          Cloudflare signs you in, copies the code to your GitHub and deploys it. It asks you for a <strong class="text-bone">setup code</strong>: any phrase you will type once, when you register your passkey.
+        </p>
+        <a href={DEPLOY_URL} class={`${limeCta} mt-6 w-full sm:w-auto`}>
+          Deploy to Cloudflare <Icon name="arrow" size={16} />
+        </a>
+        <p class="mt-4 text-[0.875rem] leading-6 text-bone/65">Then open your new Worker URL, enter the setup code and register a passkey.</p>
+      </div>
+
+      <div id="agent" class={card}>
+        <p class={label}>Option 2 · With your coding agent</p>
+        <h2 class="mt-2 text-2xl font-bold">Ask Claude Code or Codex</h2>
+        <p class="mt-3 text-[0.9375rem] leading-6 text-bone/75">
+          Paste this into a coding agent on your computer. It clones the repository, signs in to Cloudflare (you approve in the browser) and gives you a setup link.
+        </p>
+        <div class="mt-5"><CopyPrompt /></div>
+        <p class="mt-4 text-[0.875rem] leading-6 text-bone/65">
+          The agent follows <a href="/install.md" class="text-bone underline decoration-bone/30 underline-offset-4 hover:decoration-bone">install.md</a>. You can follow it yourself, too.
+        </p>
+      </div>
+
+      <div class={card}>
+        <h2 class="text-xl font-bold">What you need</h2>
+        <ul class="mt-4 grid gap-3 text-[0.9375rem] leading-6 text-bone/80">
+          <li class="flex gap-3"><Icon name="check" size={20} class="mt-0.5 text-lime" /><span>A <strong class="text-bone">Cloudflare account</strong>. The free plan is enough for normal use.</span></li>
+          <li class="flex gap-3"><Icon name="check" size={20} class="mt-0.5 text-lime" /><span>A <strong class="text-bone">Hetzner account</strong> for servers (from €5.49/month, billed by Hetzner), <strong class="text-bone">or any Ubuntu 24.04 machine</strong> you can run one command on.</span></li>
+          <li class="flex gap-3"><Icon name="check" size={20} class="mt-0.5 text-lime" /><span>A device with a passkey: your phone, laptop or security key.</span></li>
+        </ul>
+      </div>
+    </div>
+
+    <p class="mt-10 text-[0.875rem] text-bone/65">
+      Questions or problems? Read the <a href={DOCS} class="text-bone underline decoration-bone/30 underline-offset-4 hover:decoration-bone">docs on GitHub</a>.
+    </p>
+  </section>
+</Layout>

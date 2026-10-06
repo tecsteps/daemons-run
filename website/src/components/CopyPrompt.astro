@@ -1,0 +1,20 @@
+---
+import { AGENT_PROMPT } from './site';
+---
+<div class="flex min-w-0 flex-col gap-2 rounded-[10px] border border-white/15 bg-ink-900 p-2 sm:flex-row sm:items-center">
+  <code class="min-w-0 flex-1 px-2 py-2 font-mono text-[0.8125rem] leading-6 break-words text-bone" data-prompt>{AGENT_PROMPT}</code>
+  <button type="button" data-copy={AGENT_PROMPT} class="inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-[6px] border-2 border-ink-900 bg-lime px-4 text-body font-semibold text-ink-900 hover:bg-lime/90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-lime">
+    <span data-copy-label>Copy prompt</span>
+  </button>
+</div>
+<script is:inline>
+  document.querySelectorAll('[data-copy]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var label = b.querySelector('[data-copy-label]');
+      navigator.clipboard && navigator.clipboard.writeText(b.getAttribute('data-copy')).then(function () {
+        label.textContent = 'Copied';
+        setTimeout(function () { label.textContent = 'Copy prompt'; }, 1500);
+      });
+    });
+  });
+</script>

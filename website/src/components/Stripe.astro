@@ -1,0 +1,9 @@
+---
+// Adapted from old daemons-run resources/views/components/public/stripe.blade.php
+interface Props { tone?: 'dark' | 'light'; id?: string; divider?: boolean; label?: string }
+const { tone = 'dark', id, divider = false, label } = Astro.props;
+const dark = tone === 'dark';
+---
+<section id={id} aria-label={label} data-tone={tone} class:list={[dark ? 'bg-ink-950 text-bone' : 'bg-bone text-ink-900', divider && (dark ? 'border-t border-white/10' : 'border-t border-ink-900/10')]}>
+  <div class="mx-auto max-w-6xl px-4 py-16 md:px-6 md:py-20"><slot /></div>
+</section>

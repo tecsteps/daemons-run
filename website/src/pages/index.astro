@@ -1,0 +1,196 @@
+---
+// Structure adapted from old daemons-run resources/views/public/home.blade.php; all copy is new.
+import Layout from '../layouts/Layout.astro';
+import Stripe from '../components/Stripe.astro';
+import Heading from '../components/Heading.astro';
+import Art from '../components/Art.astro';
+import Feature from '../components/Feature.astro';
+import Icon from '../components/Icon.astro';
+import AgentChip from '../components/AgentChip.astro';
+import { limeCta, outlineCta, outlineCtaLight } from '../components/site';
+
+const steps = [
+  { title: 'Install', art: 'art-home-step-create', h: 256, text: 'Deploy your own control plane to your Cloudflare account and sign in with a passkey.' },
+  { title: 'Create a server', art: 'art-home-step-configure', h: 256, text: 'Paste a Hetzner API token and click Create server. Or connect any Ubuntu 24.04 machine with one curl command.' },
+  { title: 'Open a terminal', art: 'art-daemon-laptop-dark', h: 274, text: 'A real terminal in your browser, also on your phone. Your projects live in /projects.' },
+  { title: 'Expose your app', art: 'art-home-step-keep-going', h: 256, text: 'Run daemons expose 3000 and open your localhost app from any device.' },
+];
+---
+<Layout
+  title="daemons.run: Your agents never sleep."
+  description="Free, open source development servers for coding agents. Install your own control plane into your Cloudflare account, create servers in your Hetzner account, and work from a browser terminal, also on your phone."
+  preload="/images/art-hero-machine-tight@2x.webp"
+>
+  <!-- Hero, adapted from old hero-machine.blade.php -->
+  <div class="lg:flex lg:min-h-[calc(100svh-4.5rem)] lg:flex-col">
+    <section aria-label="Introduction" class="relative overflow-hidden bg-ink-950 lg:flex lg:flex-1 lg:flex-col">
+      <div class="mx-auto grid w-full min-w-0 max-w-6xl grid-cols-1 px-4 md:px-6 lg:min-h-0 lg:flex-1 lg:grid-cols-[minmax(0,0.48fr)_minmax(0,0.52fr)] lg:items-stretch lg:gap-6 xl:grid-cols-[minmax(0,0.55fr)_minmax(0,0.45fr)]">
+        <div class="flex min-w-0 flex-col justify-center pt-12 pb-4 sm:pt-14 lg:py-8">
+          <h1 class="text-[2.25rem] leading-[0.98] font-bold tracking-tight text-bone min-[420px]:text-[2.5rem] sm:text-[3.25rem] lg:text-[3rem] xl:text-[4rem]">
+            <span class="block text-lime">Your agents</span>
+            <span class="mt-1 block">never sleep.</span>
+          </h1>
+          <p class="mt-6 max-w-md text-[0.9375rem] leading-7 text-bone/75 sm:text-section sm:leading-7">
+            Your own development servers with Claude Code, Codex and OpenCode ready in a browser terminal. Installed into your Cloudflare account, running in your Hetzner account.
+          </p>
+          <div class="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+            <a href="/install" class={`${limeCta} w-full sm:w-auto`}>
+              Install
+              <Icon name="arrow" size={16} class="transition-transform duration-150 group-hover:translate-x-0.5 motion-reduce:transition-none" />
+            </a>
+            <a href="/install#agent" class={`${outlineCta} w-full sm:w-auto`}>
+              <Icon name="terminal" size={18} />
+              Install with your coding agent
+            </a>
+          </div>
+          <p class="mt-6 font-mono text-base tracking-tight text-lime">Free and open source. Your accounts, your servers.</p>
+        </div>
+        <div class="relative mx-auto mt-8 flex w-full min-w-0 max-w-[26rem] flex-col items-center justify-center pb-8 sm:max-w-[30rem] lg:mt-0 lg:max-w-none lg:py-4">
+          <img
+            src="/images/art-hero-machine-tight@2x.webp"
+            width="1119"
+            height="765"
+            alt="The daemons.run mascot working at a laptop on top of a glowing server that shows a terminal and a live app preview."
+            class="h-auto w-full object-contain mix-blend-lighten"
+            fetchpriority="high"
+          />
+        </div>
+      </div>
+    </section>
+
+    <section aria-label="Highlights" class="border-t border-white/10 bg-ink-950">
+      <div class="mx-auto grid max-w-6xl grid-cols-1 gap-6 px-4 py-6 md:px-6 md:py-7 lg:grid-cols-3 lg:gap-0 lg:divide-x lg:divide-white/10 [&>*]:lg:px-6 [&>*:first-child]:lg:pl-0 [&>*:last-child]:lg:pr-0">
+        <Feature title="Always on" icon="bolt">Close your laptop. Your agents, apps and databases keep running on the server.</Feature>
+        <Feature title="Yours" icon="shield">Your Cloudflare, your Hetzner account. No SaaS in between.</Feature>
+        <Feature title="From any device" icon="devices">A full terminal in the browser, on your desktop or your phone.</Feature>
+      </div>
+    </section>
+  </div>
+
+  <!-- 1. How it works -->
+  <Stripe id="how-it-works" divider label="How it works">
+    <Heading lead="No tokens to copy around, no YAML. About five minutes from here to your first terminal.">Four steps to a running agent.</Heading>
+    <ol class="mt-12 grid gap-6 md:grid-cols-2 xl:grid-cols-4">
+      {steps.map((step, i) => (
+        <li class="flex min-w-0 flex-col rounded-[12px] border border-white/10 bg-white/[0.03] p-5">
+          <div class="flex items-center justify-between gap-3">
+            <span class="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-lime font-mono text-xl font-bold text-ink-900" aria-hidden="true">0{i + 1}</span>
+            <Art name={step.art} width={256} height={step.h} alt="" class="h-24 w-24" />
+          </div>
+          <h3 class="mt-4 text-section font-bold"><span class="sr-only">Step {i + 1}: </span>{step.title}</h3>
+          <p class="mt-1 text-[0.9375rem] leading-6 text-pretty text-bone/75">
+            {i === 3 ? <>Run <code class="rounded bg-white/10 px-1 font-mono text-[0.8125rem] text-lime">daemons expose 3000</code> and open your localhost app from any device.</> : step.text}
+          </p>
+        </li>
+      ))}
+    </ol>
+    <div class="mt-10 flex flex-col gap-3 sm:flex-row">
+      <a href="/install" class={`${limeCta} w-full sm:w-auto`}>Start with step 1 <Icon name="arrow" size={16} /></a>
+    </div>
+  </Stripe>
+
+  <!-- 2. Your stuff, your accounts -->
+  <Stripe id="yours" tone="light" label="Your accounts">
+    <div class="grid items-center gap-10 lg:grid-cols-[minmax(0,0.55fr)_minmax(0,0.45fr)] lg:gap-12">
+      <div class="min-w-0">
+        <Heading tone="light" lead="daemons.run is software you install, not a service you sign up for. There is no daemons.run server between you and your code.">
+          Your stuff, <span class="relative -z-10 box-decoration-clone rounded-[4px] bg-lime px-2 text-ink-900">your accounts.</span>
+        </Heading>
+        <div class="mt-10 grid gap-8">
+          <Feature tone="light" title="Control plane in your Cloudflare" icon="cloud">Workers, D1 and passkey sign-in, deployed to your own account. One user: you.</Feature>
+          <Feature tone="light" title="Servers in your Hetzner account" icon="server">Created from your dashboard, billed by Hetzner. Or connect any Ubuntu 24.04 machine you already have.</Feature>
+          <Feature tone="light" title="Plain Linux underneath" icon="terminal">Git, Docker and tmux on a normal Ubuntu server. If you stop using daemons.run, the server keeps working.</Feature>
+        </div>
+      </div>
+      <div class="min-w-0">
+        <Art tone="light" name="art-solo-bouncer@2x" width={1600} height={858} alt="The mascot standing guard between a cluttered laptop desk and a clean box that holds only project folders and a terminal." class="h-auto w-full" />
+      </div>
+    </div>
+  </Stripe>
+
+  <!-- 3. Your agent -->
+  <Stripe id="agents" label="Your agent">
+    <div class="grid items-center gap-10 lg:grid-cols-[minmax(0,0.55fr)_minmax(0,0.45fr)] lg:gap-12">
+      <div class="min-w-0">
+        <Heading lead="Claude Code, Codex and OpenCode come preinstalled on every server. Sign in once. Anything else that runs in a terminal works too.">
+          Bring your agent. <span class="text-lime">It is already there.</span>
+        </Heading>
+        <div class="mt-8 grid grid-cols-2 gap-2 sm:grid-cols-4">
+          <AgentChip slug="claudecode" label="Claude Code" />
+          <AgentChip slug="codex" label="Codex" />
+          <AgentChip slug="opencode" label="OpenCode" />
+          <AgentChip slug="shell" label="Any CLI" />
+        </div>
+        <p class="mt-8 text-[0.9375rem] font-semibold text-lime sm:text-section sm:leading-7">Close the tab, lose Wi-Fi, switch to your phone. The session keeps running.</p>
+      </div>
+      <div class="min-w-0">
+        <Art name="art-usp-running@2x" width={800} height={800} alt="The mascot tending a glowing server at night under a moon and stars." class="mx-auto h-auto w-full max-w-[22rem]" />
+      </div>
+    </div>
+  </Stripe>
+
+  <!-- 4. Apps -->
+  <Stripe id="apps" tone="light" label="Apps">
+    <div class="grid items-center gap-10 lg:grid-cols-[minmax(0,0.48fr)_minmax(0,0.52fr)] lg:gap-14">
+      <div class="min-w-0 lg:order-last">
+        <Heading tone="light" lead="Your agent built something on localhost. One command gives it a link you can open anywhere, with no deployment and no domain.">
+          From localhost to a link.
+        </Heading>
+        <div class="mt-8 overflow-hidden rounded-[10px] border border-ink-900 bg-ink-950 font-mono text-[0.8125rem] leading-6 text-bone shadow-[0_3px_0_0_#11120F]">
+          <div class="flex gap-1.5 border-b border-white/10 px-4 py-2.5" aria-hidden="true">
+            <span class="h-2.5 w-2.5 rounded-full bg-white/20"></span><span class="h-2.5 w-2.5 rounded-full bg-white/20"></span><span class="h-2.5 w-2.5 rounded-full bg-white/20"></span>
+          </div>
+          <div class="overflow-x-auto px-4 py-3">
+            <p class="whitespace-nowrap"><span class="text-lime">dev@server-1</span>:<span class="text-bone/60">/projects/shop</span>$ daemons expose 3000</p>
+            <p class="whitespace-nowrap text-bone/75">https://daemons-apps.&lt;you&gt;.workers.dev/shop/</p>
+          </div>
+        </div>
+        <ul class="mt-8 grid gap-3 text-[0.9375rem] leading-6 text-ink-900/80">
+          <li class="flex gap-3"><Icon name="lock" size={20} class="mt-0.5 text-ink-900" /><span><strong class="text-ink-900">Private by default.</strong> Only you, signed in with your passkey.</span></li>
+          <li class="flex gap-3"><Icon name="globe" size={20} class="mt-0.5 text-ink-900" /><span><strong class="text-ink-900">Share when you want.</strong> Turn on a public link for one app.</span></li>
+        </ul>
+      </div>
+      <div class="min-w-0">
+        <Art tone="light" name="art-home-real-software@2x" width={1800} height={681} alt="The mascot at a laptop between a terminal running npm run dev and a browser window showing My App live." class="h-auto w-full" />
+      </div>
+    </div>
+  </Stripe>
+
+  <!-- 5. Cost -->
+  <Stripe id="cost" label="Cost">
+    <Heading lead="daemons.run costs nothing. You pay your server provider directly, at their prices.">Free software. <span class="text-lime">Fair servers.</span></Heading>
+    <div class="mt-10 grid gap-4 md:grid-cols-3">
+      <div class="rounded-[12px] border border-lime/50 bg-white/[0.03] p-5">
+        <p class="font-mono text-caption tracking-[0.14em] text-bone/70 uppercase">daemons.run</p>
+        <p class="mt-2 text-3xl font-bold text-lime">€0</p>
+        <p class="mt-2 text-[0.9375rem] leading-6 text-bone/75">Free and open source, MIT licensed. No account with us, ever.</p>
+      </div>
+      <div class="rounded-[12px] border border-white/10 bg-white/[0.03] p-5">
+        <p class="font-mono text-caption tracking-[0.14em] text-bone/70 uppercase">Hetzner server</p>
+        <p class="mt-2 text-3xl font-bold">from €5.49<span class="text-base font-medium text-bone/70">/month</span></p>
+        <p class="mt-2 text-[0.9375rem] leading-6 text-bone/75">Billed by Hetzner directly, no markup. Or use any Ubuntu machine you already pay for.</p>
+      </div>
+      <div class="rounded-[12px] border border-white/10 bg-white/[0.03] p-5">
+        <p class="font-mono text-caption tracking-[0.14em] text-bone/70 uppercase">Cloudflare</p>
+        <p class="mt-2 text-3xl font-bold">Free plan</p>
+        <p class="mt-2 text-[0.9375rem] leading-6 text-bone/75">Normal use fits Cloudflare's free Workers plan.</p>
+      </div>
+    </div>
+  </Stripe>
+
+  <!-- 6. Final CTA, adapted from the old final-cta stripe -->
+  <Stripe tone="light" label="Get started">
+    <div class="grid items-center gap-8 lg:grid-cols-[minmax(0,16rem)_minmax(0,1fr)] lg:gap-12">
+      <Art tone="light" name="art-home-final-wave@2x" width={900} height={900} alt="The daemons.run mascot waving next to a small glowing server." class="mx-auto h-auto w-48 lg:w-full" />
+      <div class="min-w-0">
+        <Heading tone="light">Give your agents a home<br class="hidden sm:block" /> that never turns off.</Heading>
+        <p class="mt-5 text-[0.9375rem] text-ink-900/80 sm:text-section sm:leading-7">Install it in about five minutes. Free and open source.</p>
+        <div class="mt-8 flex flex-col gap-3 sm:flex-row">
+          <a href="/install" class={`${limeCta} w-full sm:w-auto`}>Install <Icon name="arrow" size={16} /></a>
+          <a href="/install#agent" class={`${outlineCtaLight} w-full sm:w-auto`}>Install with your coding agent</a>
+        </div>
+        <p class="mt-6 font-mono text-caption font-semibold tracking-[0.16em] text-ink-900/70 uppercase">Your Cloudflare · Your servers · Your agents</p>
+      </div>
+    </div>
+  </Stripe>
+</Layout>
