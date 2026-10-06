@@ -9,7 +9,7 @@ MIT licensed. One user per control plane. No central SaaS hosting of user projec
 1. User clicks **Install** on daemons.run (or pastes a prompt into their local coding agent).
 2. Their own control plane is deployed to `https://daemons.<account>.workers.dev`.
 3. They open it, register a passkey.
-4. They paste a Hetzner or Contabo API key and click **Create server**.
+4. They paste a Hetzner API token and click **Create server**.
 5. A few minutes later the server is online. They open a terminal, log into Claude Code or Codex, and work in `/projects/<name>`.
 6. They run `daemons expose 3000 --name shop` and open `https://daemons-apps.<account>.workers.dev/shop/` from their phone (apps get their own origin, 08).
 
@@ -22,7 +22,7 @@ Every epic exists to make one step of this flow good. If a feature does not serv
 | 01 | [Control plane foundation](01-control-plane-foundation.md) | Worker, D1, dashboard shell with the Terminal Lime look |
 | 02 | [Passkey authentication](02-passkey-auth.md) | Passkey-only sign-in, setup link, recovery |
 | 03 | [Installation](03-installation.md) | Deploy button and local coding-agent install |
-| 04 | [Server provisioning](04-server-provisioning.md) | Hetzner and Contabo servers from the UI |
+| 04 | [Server provisioning](04-server-provisioning.md) | Hetzner servers from the UI; any other Ubuntu machine via one command |
 | 05 | [VM installer and daemons-agent](05-vm-installer-and-agent.md) | cloud-init, installer, agent with an outbound connection |
 | 06 | [Browser terminal](06-browser-terminal.md) | Terminal in the browser, coding agents on the VM |
 | 07 | [Projects](07-projects.md) | `/projects` as the unit of work |
@@ -76,7 +76,7 @@ Look and feel, mascot images, brand and many UI components come from the old pro
 ## Rules for every epic
 
 - **UX first.** Every epic names the screen states: empty, loading, error, success. No dead ends; every error says what to do next.
-- **Smallest thing that works.** No abstraction for a second provider, user or region until it exists.
+- **Smallest thing that works.** No abstraction for a second user or region until it exists. The one exception is server providers: Hetzner only in v1, behind one small interface so we are not locked in (04).
 - **Free tier.** A normal single user stays within Cloudflare's free tier (Durable Objects: 100,000 requests and 13,000 GB-s per day; incoming WebSocket messages count 20:1). Terminal and app traffic are the risk; epics 05, 06 and 08 measure it.
 - **The VM keeps working without the control plane.** Nothing on the VM depends on the control plane being up.
 - **Mobile works.** Every screen, the terminal included, works on a phone. Check it first with the browser's mobile view, then do the final check in the iOS Simulator (Safari) and the Android emulator (Chrome) on the dev machine.

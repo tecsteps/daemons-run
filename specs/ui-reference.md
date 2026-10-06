@@ -43,8 +43,8 @@ The old project (Laravel + Inertia + React, a different architecture) already so
 
 | What | Where | Notes |
 |---|---|---|
-| Provider credential forms | `components/CloudCredentialForms.tsx`, `components/CloudProviders.tsx` | Hetzner and Contabo field sets and validation states. Drop OVHcloud. |
-| Create server forms | `components/ServerPurchaseForm.tsx` (Hetzner), `components/ServerContaboOrderForm.tsx` | Location and size pickers, price display, Contabo billing warning. |
+| Provider credential forms | `components/CloudCredentialForms.tsx`, `components/CloudProviders.tsx` | Hetzner field set and validation states. Drop Contabo and OVHcloud for now. |
+| Create server forms | `components/ServerPurchaseForm.tsx` (Hetzner) | Location and size pickers, price display. (`ServerContaboOrderForm.tsx` is for when Contabo returns.) |
 | Add existing server | `components/ServerAdoptForm.tsx` | Copyable one-line command pattern. |
 | Progress view | `components/daemon/ProvisioningView.tsx`, `components/ProvisioningChecklist.tsx` | Step list with the "creating" illustration. |
 | Pages | `pages/servers/{index,create,show}.tsx`, `pages/onboarding/server.tsx` | Layout reference. |

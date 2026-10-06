@@ -19,7 +19,7 @@ Reuse from the old project: [ui-reference.md](ui-reference.md), sections "Homepa
 - Hero: "Your agents never sleep." (or the old "A development machine that never turns off."), the server cabinet art, **Install** + "Install with your coding agent".
 - Sections (one idea each):
   1. How it works: Install → Create a server → Open a terminal → Expose your app.
-  2. Your stuff, your accounts: control plane in your Cloudflare, servers in your Hetzner or Contabo, no SaaS in between.
+  2. Your stuff, your accounts: control plane in your Cloudflare, servers in your Hetzner account (or any Ubuntu machine), no SaaS in between.
   3. Your agent: Claude Code, Codex or OpenCode preinstalled; anything else that runs in a terminal works too.
   4. Apps from localhost to a link: `daemons expose 3000`.
   5. Cost: free and open source (MIT). You pay your server provider directly (Hetzner from about €4/month); normal use fits Cloudflare's free plan (say "normal use", not "always").
