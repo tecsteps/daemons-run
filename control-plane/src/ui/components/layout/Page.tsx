@@ -93,12 +93,12 @@ export function SectionCard({
       )}
     >
       {title || description || actions ? (
-        <div className="flex min-w-0 items-start justify-between gap-3">
+        <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div className="flex min-w-0 flex-col gap-1">
             {title ? <h2 className="font-sans text-card-title font-semibold text-ink-900">{title}</h2> : null}
             {description ? <p className="text-body text-muted">{description}</p> : null}
           </div>
-          {actions ? <div className="flex shrink-0 items-center gap-2">{actions}</div> : null}
+          {actions ? <div className="flex shrink-0 flex-wrap items-center gap-2">{actions}</div> : null}
         </div>
       ) : null}
       {children}
