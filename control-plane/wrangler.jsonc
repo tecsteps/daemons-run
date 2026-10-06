@@ -27,7 +27,7 @@
     { "tag": "v1", "new_sqlite_classes": ["ServerConnection", "KeyVault"] }
   ],
   "vars": {
-    "AGENT_RELEASE": "dev"
+    "AGENT_RELEASE": "v0.1.0"
   },
   "rules": [{ "type": "Text", "globs": ["**/*.sh", "**/*.tmpl"], "fallthrough": true }],
   "observability": { "enabled": true }
