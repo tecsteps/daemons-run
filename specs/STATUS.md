@@ -39,9 +39,9 @@ Path A Deploy button (owner clicks it 2026-10-07), finish 06 port + mobile reche
 
 ## Test servers (Hetzner, label daemons-control-plane=daemons-dev.fabian-wesner.workers.dev)
 
-- `dev-arm-1`: CAX11, nbg1, €5.99/month, created 2026-10-06 (no SSH key).
+- ~~`dev-arm-1`~~: deleted 2026-10-06 through the UI (verified gone at Hetzner).
 - `dev-arm-2`: CAX11, all three coding agents, SSH key `control-plane/e2e/.auth/dev_ed25519` (git-ignored), created 2026-10-06.
-- `dev-x86-1`: CX23, being created 2026-10-06.
+- `dev-x86-1`: CX23 (x86), Claude Code + OpenCode, SSH key, created 2026-10-06.
 
 ## How to verify
 

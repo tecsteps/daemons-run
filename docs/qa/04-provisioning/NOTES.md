@@ -26,3 +26,4 @@ Still open for this epic: a real Hetzner server to Online (needs the agent relea
 - Terminal on the real server: Docker 29.8.2, Claude Code 2.1.291, `id -un` = dev.
 - `ports.list`: only sshd (22, v4+v6) and systemd-resolved on loopback. No listener added by daemons.
 - Screens: real progress (creating, docker), online server page, terminal; desktop and phone, light and dark.
+- Delete through the UI on a real server (dev-arm-1): removed at Hetzner (API shows only dev-arm-2, dev-x86-1).
