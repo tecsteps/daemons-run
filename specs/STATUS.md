@@ -39,7 +39,10 @@ Path A Deploy button (owner clicks it 2026-10-07); manual iPhone check (Add a ph
 
 ## Test servers (Hetzner, all labelled managed-by=daemons, daemons-control-plane=daemons-dev.fabian-wesner.workers.dev; SSH key control-plane/e2e/.auth/dev_ed25519)
 
-
+- `dev-arm-2`: CAX11, nbg1, running, IPv4 167.233.38.149
+- `dev-x86-1`: CX23, nbg1, running, IPv4 2.28.204.234
+- `final-cx23`: CX23, nbg1, running, IPv4 2.28.75.250
+- `final-cx23-b`: CX23, nbg1, running, IPv4 2.31.2.151
 
 ## How to verify
 
