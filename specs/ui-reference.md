@@ -74,7 +74,7 @@ git -C /Users/wesner/Herd/daemons-run show "pre-pivot-2026-09-05:<path>"
 
 ## Browser terminal (epic 06)
 
-The old terminal stack is about 27,000 lines, mostly recovery, ticket and lock machinery we do not need. **Do not port the stack.** Build a small terminal on xterm.js and read these files for the hard-won details:
+**Owner, 2026-10-06:** each coding agent has its own terminal quirks (scrolling in OpenCode differs from Claude Code), and the pre-pivot tag `pre-pivot-2026-09-05` solved them, tested on real devices. Reuse that behaviour: the per-agent scroll modes and evidence in `config/agents.php`, the tmux options and wheel bindings in `gateway/src/tmux.js`, and the touch gestures in `resources/js/components/TerminalSession.tsx` (≈ lines 2040–3200). Still skip the ticket, recovery, local-echo and ownership machinery. Smaller details live in these files:
 
 | What | Where | Why it matters |
 |---|---|---|
