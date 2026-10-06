@@ -81,7 +81,7 @@ Look and feel, mascot images, brand and many UI components come from the old pro
 ## Development setup
 
 - Development control plane: Worker `daemons-dev` (`https://daemons-dev.fabian-wesner.workers.dev`, apps gateway `daemons-apps-dev`). The names `daemons` / `daemons-apps` stay free for testing a real fresh install (03).
-- Test servers: Hetzner only, at most one at a time, label `daemons-dev`. Test server: **CX43** (x86, 8 vCPU, 16 GB, 160 GB, €15.99/month, €0.0256/hour) in `fsn1`, `nbg1` or `hel1`; 16 GB gives headroom for coding agents plus Docker stacks. Never touch servers without that label.
+- Test servers: Hetzner, cheapest tier, label `daemons-dev`: **CX23** (x86, 2 vCPU, 4 GB, €5.49/month; nbg1, hel1) and **CAX11** (Arm64, €5.99/month) to cover the Arm build. Several at once are fine (provisioning tests, multi-server UI), up to 5. They may stay running between tests. A bigger CX43 comes later.
 - Credentials for development live in the git-ignored `.env` (`CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`, `HETZNER_API_KEY`).
 
 ## Rules for every epic
