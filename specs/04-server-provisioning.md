@@ -41,6 +41,7 @@ Hetzner is the only provider in v1, but nothing outside one folder knows that:
 ## Provider notes
 
 - Hetzner: hourly billing, fast (about 1 minute), `user_data` supported. The only provider in v1.
+- Recommended default size: **CX23** (2 vCPU, 4 GB RAM, 40 GB, €5.49/month), enough for one coding agent plus a Compose stack. Hetzner marks the cost-optimized line "limited availability", so when a size is sold out at a location the form says so and suggests another location or the next size, read live from the API.
 - Contabo and other providers: deferred (owner, 2026-10-06: start with Hetzner only). Their machines join through **Add existing server**. When Contabo comes back: deletion is a cancellation that runs until the end of the billing period, so the UI must say so (see the Sol review in git history).
 
 ## Out of scope
