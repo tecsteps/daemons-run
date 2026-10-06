@@ -52,6 +52,7 @@ export const router = createBrowserRouter([
       { path: '/servers', element: <ServersPage /> },
       { path: '/servers/new', element: <NewServerPage /> },
       { path: '/servers/:id', element: <ServerPage /> },
+      { path: '/servers/:id/files', lazy: async () => ({ Component: (await import('@/pages/files')).FilesPage }) },
       { path: '/projects', element: <ProjectsPage /> },
       { path: '/apps', element: <AppsPage /> },
       { path: '/settings', element: <SettingsPage /> },

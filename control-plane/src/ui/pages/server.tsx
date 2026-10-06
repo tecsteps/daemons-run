@@ -1,7 +1,7 @@
 // Progress view adapted from old daemons-run resources/js/components/daemon/ProvisioningView.tsx
 // and ProvisioningChecklist.tsx (step list with the "creating" illustration).
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Check, Circle, Loader2, RotateCw, SquareTerminal, Trash2, X } from 'lucide-react';
+import { Check, Circle, FolderOpen, Loader2, RotateCw, SquareTerminal, Trash2, X } from 'lucide-react';
 import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
 import { AppIllustration } from '@/components/AppIllustration';
@@ -166,6 +166,14 @@ export function ServerPage() {
                 <Link to={`/servers/${server.id}/terminal`}>
                   <SquareTerminal />
                   Open terminal
+                </Link>
+              </Button>
+            ) : null}
+            {server.status === 'online' ? (
+              <Button asChild variant="secondary">
+                <Link to={`/servers/${server.id}/files`} data-testid="open-files">
+                  <FolderOpen />
+                  Files
                 </Link>
               </Button>
             ) : null}

@@ -112,6 +112,19 @@ export class ServerConnection extends DurableObject<Env> {
     });
   }
 
+  /**
+   * The RPC entry for Workers: never throws, because custom errors lose their class and
+   * code across RPC. `agentRequest` below turns a failed reply back into an AgentError.
+   */
+  async call(type: string, params: Record<string, unknown> = {}, timeoutMs = REQUEST_TIMEOUT): Promise<Reply> {
+    try {
+      return await this.request(type, params, timeoutMs);
+    } catch (error) {
+      const code = error instanceof AgentError ? error.code : 'internal';
+      return { id: '', ok: false, error: { code, message: error instanceof Error ? error.message : String(error) } };
+    }
+  }
+
   async status(): Promise<{ connected: boolean; connectedAt: number | null; lastHeartbeat: number | null }> {
     const agent = this.agentSocket();
     if (!agent) return { connected: false, connectedAt: null, lastHeartbeat: null };
@@ -155,6 +168,10 @@ export class ServerConnection extends DurableObject<Env> {
         return this.acceptAgent(request);
       case '/terminal':
         return this.attachTerminal(request, url);
+      case '/archive':
+        return this.archive(new URL(request.url).searchParams.get('path')!).catch(
+          (error: unknown) => new Response(error instanceof Error ? error.message : 'Archive failed', { status: 502 }),
+        );
       case '/app':
         return this.proxyApp(request).catch(
           (error: unknown) =>
@@ -436,6 +453,18 @@ export class ServerConnection extends DurableObject<Env> {
     return response;
   }
 
+  /** A .tar.gz of a folder, streamed from the agent with the same window as HTTP bodies. */
+  private async archive(path: string): Promise<Response> {
+    if (!this.agentSocket()) throw new AgentError('offline', 'The server is offline.');
+    const channel = await this.nextChannel();
+    const response = new Promise<Response>((resolve, reject) => {
+      this.http.set(channel, { resolve, reject, unacked: 0, publicBase: '', port: 0, started: false });
+    });
+    this.onHttpResponse(channel, 200, [['Content-Type', 'application/gzip']]);
+    await this.request('file.archive', { channel, path });
+    return response;
+  }
+
   private onHttpResponse(channel: number, status: number, headerPairs: [string, string][]) {
     const stream = this.http.get(channel);
     if (!stream || stream.started) return;
@@ -503,3 +532,10 @@ export function rewriteLocation(value: string, port: number, publicBase: string)
 }
 
 export const serverStub = (env: Env, serverId: string) => env.SERVER_CONNECTION.get(env.SERVER_CONNECTION.idFromName(serverId));
+
+/** Sends a request to a server's agent; throws AgentError with the agent's code on failure. */
+export async function agentRequest(env: Env, serverId: string, type: string, params: Record<string, unknown> = {}, timeoutMs?: number) {
+  const reply = (await serverStub(env, serverId).call(type, params, timeoutMs)) as unknown as Reply;
+  if (!reply.ok) throw new AgentError(reply.error?.code ?? 'internal', reply.error?.message ?? 'The server reported an error.');
+  return reply;
+}

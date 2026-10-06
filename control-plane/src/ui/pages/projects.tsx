@@ -132,6 +132,9 @@ function ProjectCard({ server, project, apps }: { server: ServerView; project: P
           </Button>
         ) : null}
         <Button asChild size="sm" variant="secondary">
+          <Link to={`/servers/${server.id}/files?path=${encodeURIComponent(project.path)}`}>Files</Link>
+        </Button>
+        <Button asChild size="sm" variant="secondary">
           <Link to="/apps">Expose app</Link>
         </Button>
         {server.status === 'online' ? (

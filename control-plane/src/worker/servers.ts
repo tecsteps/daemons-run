@@ -4,7 +4,7 @@ import type { Env, HonoEnv } from './env';
 import { HetznerProvider } from './providers/hetzner';
 import { ProviderError, type Provider } from './providers/provider';
 import { vault } from './key-vault';
-import { AgentError, serverStub } from './server-connection';
+import { AgentError, agentRequest, serverStub } from './server-connection';
 import cloudInitTemplate from './generated/cloud-init.yaml.tmpl';
 
 export const AGENTS = ['claude', 'codex', 'opencode'] as const;
@@ -394,7 +394,7 @@ export async function agentCall(c: Context<HonoEnv>, type: string, params: Recor
   const row = await getRow(c.env, c.req.param('id')!);
   if (!row) return c.json({ error: 'Server not found.' }, 404);
   try {
-    const reply = (await serverStub(c.env, row.id).request(type, params, timeoutMs)) as Record<string, unknown>;
+    const reply = (await agentRequest(c.env, row.id, type, params, timeoutMs)) as Record<string, unknown>;
     const { id: _id, ok: _ok, ...result } = reply;
     return c.json(result);
   } catch (error) {
@@ -449,7 +449,7 @@ done`;
 type ExecResult = { exit_code: number; stdout: string; stderr: string };
 
 async function exec(env: Env, serverId: string, command: string, timeoutMs = 30_000): Promise<ExecResult> {
-  return (await serverStub(env, serverId).request('exec', { command, cwd: '/projects', user: 'dev', timeout_ms: timeoutMs }, timeoutMs + 5000)) as unknown as ExecResult;
+  return (await agentRequest(env, serverId, 'exec', { command, cwd: '/projects', user: 'dev', timeout_ms: timeoutMs }, timeoutMs + 5000)) as unknown as ExecResult;
 }
 
 function agentErrorResponse(c: Context<HonoEnv>, error: unknown) {
@@ -560,4 +560,169 @@ serverRoutes.post('/:id/projects/:name/compose/:action', async (c) => {
   } catch (error) {
     return agentErrorResponse(c, error);
   }
+});
+
+// --- files (09): every operation runs as user dev through the agent ------------------------
+
+const CHUNK = 524_288;
+const EDIT_LIMIT = 2 * 1024 * 1024;
+const TRANSFER_LIMIT = 100 * 1024 * 1024;
+
+function b64encode(bytes: Uint8Array): string {
+  let binary = '';
+  for (let i = 0; i < bytes.length; i += 0x8000) binary += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+  return btoa(binary);
+}
+
+function b64decode(text: string): Uint8Array {
+  const binary = atob(text);
+  const out = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) out[i] = binary.charCodeAt(i);
+  return out;
+}
+
+function cleanPath(path: string | undefined): string | null {
+  if (!path || !path.startsWith('/') || path.includes('\0')) return null;
+  return path;
+}
+
+serverRoutes.get('/:id/files', async (c) => {
+  const path = cleanPath(c.req.query('path'));
+  if (!path) return c.json({ error: 'Bad path.' }, 400);
+  return agentCall(c, 'file.list', { path, hidden: c.req.query('hidden') === '1' });
+});
+
+serverRoutes.get('/:id/files/stat', async (c) => {
+  const path = cleanPath(c.req.query('path'));
+  if (!path) return c.json({ error: 'Bad path.' }, 400);
+  return agentCall(c, 'file.stat', { path });
+});
+
+/** File bytes: for the editor (`?edit=1`, 2 MB cap) or as a download (100 MB cap), streamed in chunks. */
+serverRoutes.get('/:id/files/content', async (c) => {
+  const path = cleanPath(c.req.query('path'));
+  if (!path) return c.json({ error: 'Bad path.' }, 400);
+  const row = await getRow(c.env, c.req.param('id'));
+  if (!row) return c.json({ error: 'Server not found.' }, 404);
+  const edit = c.req.query('edit') === '1';
+  let first: Record<string, unknown>;
+  try {
+    first = (await agentRequest(c.env, row.id, 'file.read', { path, offset: 0, length: CHUNK })) as Record<string, unknown>;
+  } catch (error) {
+    return agentErrorResponse(c, error);
+  }
+  const size = Number(first.size);
+  if (size > (edit ? EDIT_LIMIT : TRANSFER_LIMIT)) {
+    return c.json({ error: edit ? 'This file is larger than 2 MB. Download it instead.' : 'Downloads are limited to 100 MB.', code: 'too_large' }, 413);
+  }
+  const name = path.split('/').pop() || 'file';
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/octet-stream',
+    'Content-Length': String(size),
+    'X-Mtime-Ms': String(first.mtime_ms),
+    'Cache-Control': 'no-store',
+  };
+  if (!edit) headers['Content-Disposition'] = `attachment; filename*=UTF-8''${encodeURIComponent(name)}`;
+  const env = c.env;
+  const stream = new ReadableStream<Uint8Array>({
+    async start(controller) {
+      controller.enqueue(b64decode(String(first.data)));
+      let offset = b64decode(String(first.data)).length;
+      let eof = first.eof === true;
+      try {
+        while (!eof && offset < size) {
+          const next = (await agentRequest(env, row.id, 'file.read', { path, offset, length: CHUNK })) as Record<string, unknown>;
+          const bytes = b64decode(String(next.data));
+          controller.enqueue(bytes);
+          offset += bytes.length;
+          eof = next.eof === true || bytes.length === 0;
+        }
+        controller.close();
+      } catch (error) {
+        controller.error(error);
+      }
+    },
+  });
+  return new Response(stream, { headers });
+});
+
+/** Upload or save: the raw body is written in chunks; `expected_mtime_ms` guards against overwriting a newer file. */
+serverRoutes.put('/:id/files/content', async (c) => {
+  const path = cleanPath(c.req.query('path'));
+  if (!path) return c.json({ error: 'Bad path.' }, 400);
+  const row = await getRow(c.env, c.req.param('id'));
+  if (!row) return c.json({ error: 'Server not found.' }, 404);
+  const length = Number(c.req.header('Content-Length') ?? 0);
+  if (length > TRANSFER_LIMIT) return c.json({ error: 'Uploads are limited to 100 MB per file.', code: 'too_large' }, 413);
+  const expected = c.req.query('expected_mtime_ms');
+  const reader = c.req.raw.body?.getReader();
+  let offset = 0;
+  let pending = new Uint8Array(0);
+  let result: Record<string, unknown> = {};
+  const flush = async (bytes: Uint8Array) => {
+    result = (await agentRequest(c.env, row.id, 'file.write', {
+      path,
+      data: b64encode(bytes),
+      offset,
+      truncate: offset === 0,
+      ...(offset === 0 && expected ? { expected_mtime_ms: Number(expected) } : {}),
+    })) as Record<string, unknown>;
+    offset += bytes.length;
+  };
+  try {
+    if (reader) {
+      for (;;) {
+        const { done, value } = await reader.read();
+        if (value) {
+          const merged = new Uint8Array(pending.length + value.length);
+          merged.set(pending);
+          merged.set(value, pending.length);
+          pending = merged;
+          while (pending.length >= CHUNK) {
+            await flush(pending.subarray(0, CHUNK));
+            pending = pending.slice(CHUNK);
+          }
+        }
+        if (done) break;
+      }
+    }
+    if (pending.length > 0 || offset === 0) await flush(pending);
+  } catch (error) {
+    if (error instanceof AgentError && error.code === 'conflict') {
+      return c.json({ error: 'The file changed on the server since you opened it.', code: 'conflict' }, 409);
+    }
+    return agentErrorResponse(c, error);
+  }
+  return c.json({ size: result.size, mtime_ms: result.mtime_ms });
+});
+
+serverRoutes.post('/:id/files/mkdir', async (c) => {
+  const { path } = await c.req.json<{ path: string }>();
+  if (!cleanPath(path)) return c.json({ error: 'Bad path.' }, 400);
+  return agentCall(c, 'file.mkdir', { path });
+});
+
+serverRoutes.post('/:id/files/rename', async (c) => {
+  const { from, to } = await c.req.json<{ from: string; to: string }>();
+  if (!cleanPath(from) || !cleanPath(to)) return c.json({ error: 'Bad path.' }, 400);
+  return agentCall(c, 'file.rename', { from, to });
+});
+
+serverRoutes.delete('/:id/files', async (c) => {
+  const path = cleanPath(c.req.query('path'));
+  if (!path || path === '/' || path === '/projects' || path === '/home/dev') return c.json({ error: 'This folder cannot be deleted here.' }, 400);
+  return agentCall(c, 'file.delete', { path, recursive: c.req.query('recursive') === '1' });
+});
+
+serverRoutes.get('/:id/files/archive', async (c) => {
+  const path = cleanPath(c.req.query('path'));
+  if (!path) return c.json({ error: 'Bad path.' }, 400);
+  const row = await getRow(c.env, c.req.param('id'));
+  if (!row) return c.json({ error: 'Server not found.' }, 404);
+  const response = await serverStub(c.env, row.id).fetch(`https://do/archive?path=${encodeURIComponent(path)}`);
+  if (!response.ok) return c.json({ error: await response.text() }, 502);
+  const name = (path.split('/').filter(Boolean).pop() ?? 'folder') + '.tar.gz';
+  return new Response(response.body, {
+    headers: { 'Content-Type': 'application/gzip', 'Content-Disposition': `attachment; filename*=UTF-8''${encodeURIComponent(name)}`, 'Cache-Control': 'no-store' },
+  });
 });
