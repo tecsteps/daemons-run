@@ -60,7 +60,6 @@ Path A Deploy button (owner clicks it 2026-10-07), finish 06 port + mobile reche
 - **Mobile copy/select**: a "Select" key opens the scrollback as native selectable text (xterm's own touch selection is unreliable on phones).
 - **Terminal latency**: the status line reads 33 ms from the iOS Simulator; the 146–174 ms seen earlier came from the headless test browser.
 - **Phones without a synced passkey** sign in through Settings → Add a phone (QR link, single use, 10 min).
-- **Hero art** on the homepage still shows a small "Cursor" chip from the old artwork.
 
 ## Open decisions
 
