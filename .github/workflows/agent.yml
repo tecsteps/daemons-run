@@ -1,0 +1,37 @@
+name: agent
+
+on:
+  push:
+    paths: ["agent/**", "installer/**", ".github/workflows/agent.yml"]
+  pull_request:
+    paths: ["agent/**", "installer/**", ".github/workflows/agent.yml"]
+
+permissions:
+  contents: read
+
+jobs:
+  go:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: agent
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: agent/go.mod
+          cache-dependency-path: agent/go.sum
+      - name: Install tmux (terminal tests)
+        run: command -v tmux || (sudo apt-get update -q && sudo apt-get install -y -q tmux)
+      - name: gofmt
+        run: test -z "$(gofmt -l . | tee /dev/stderr)"
+      - run: go vet ./...
+      - run: go test -race ./...
+
+  installer:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v5
+      - run: shellcheck -s sh installer/install.sh installer/test/run.sh

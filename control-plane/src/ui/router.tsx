@@ -12,7 +12,6 @@ import { AppsPage } from '@/pages/apps';
 import { SettingsPage } from '@/pages/settings';
 import { NewServerPage } from '@/pages/new-server';
 import { ServerPage } from '@/pages/server';
-import { TerminalPage } from '@/pages/terminal';
 
 export function useMe() {
   return useQuery({ queryKey: ['me'], queryFn: () => api<Me>('/me'), staleTime: 60_000 });
@@ -61,6 +60,6 @@ export const router = createBrowserRouter([
   },
   {
     element: <RequireOwner fill />,
-    children: [{ path: '/servers/:id/terminal', element: <TerminalPage /> }],
+    children: [{ path: '/servers/:id/terminal', lazy: async () => ({ Component: (await import('@/pages/terminal')).TerminalPage }) }],
   },
 ]);

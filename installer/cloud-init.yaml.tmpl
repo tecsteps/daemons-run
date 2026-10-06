@@ -1,0 +1,14 @@
+#cloud-config
+# Filled in by the control plane: __CONTROL_PLANE_URL__, __ENROLL_TOKEN__, __AGENTS__.
+write_files:
+  - path: /etc/daemons/enroll-token
+    owner: root:root
+    permissions: "0600"
+    content: "__ENROLL_TOKEN__"
+  - path: /etc/daemons/install.env
+    owner: root:root
+    permissions: "0644"
+    content: |
+      DAEMONS_AGENTS="__AGENTS__"
+runcmd:
+  - [sh, -c, "curl -fsSL __CONTROL_PLANE_URL__/install.sh | sh"]

@@ -218,7 +218,11 @@ export class ServerConnection extends DurableObject<Env> {
     if (a.role === 'terminal') {
       if (!agent) return ws.close(4001, 'The server is offline.');
       if (typeof message === 'string') {
-        const msg = JSON.parse(message) as { type: string; cols?: number; rows?: number };
+        const msg = JSON.parse(message) as { type: string; cols?: number; rows?: number; t?: number };
+        if (msg.type === 'ping') {
+          ws.send(JSON.stringify({ type: 'pong', t: msg.t }));
+          return;
+        }
         if (msg.type === 'resize') {
           this.sendJson(agent, { id: `c-r${a.channel}-${now()}`, type: 'terminal.resize', channel: a.channel, cols: msg.cols, rows: msg.rows });
         }
@@ -346,7 +350,11 @@ export class ServerConnection extends DurableObject<Env> {
     const channel = Number(msg.channel);
     switch (msg.type) {
       case 'terminal.exit':
-        for (const browser of this.ctx.getWebSockets(`ch:${channel}`)) browser.close(4002, 'The session ended.');
+        // A detach from inside tmux is not the end of the session: the browser reattaches.
+        for (const browser of this.ctx.getWebSockets(`ch:${channel}`)) {
+          if (msg.session_ended === false) browser.close(4003, 'Detached.');
+          else browser.close(4002, 'The session ended.');
+        }
         break;
       case 'http.response':
         this.onHttpResponse(channel, msg.status as number, msg.headers as [string, string][]);

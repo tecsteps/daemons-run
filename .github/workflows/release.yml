@@ -1,0 +1,66 @@
+name: release
+
+# Every push to main refreshes the rolling "dev" pre-release (development control planes
+# install from it); a tag vX.Y.Z publishes a normal release. Both carry the agent binaries
+# for linux amd64/arm64 and SHA256SUMS, which install.sh verifies.
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: agent/go.mod
+          cache-dependency-path: agent/go.sum
+
+      - name: Version
+        run: |
+          if [ "$GITHUB_REF_TYPE" = tag ]; then
+            echo "VERSION=$GITHUB_REF_NAME" >>"$GITHUB_ENV"
+          else
+            echo "VERSION=dev-${GITHUB_SHA::7}" >>"$GITHUB_ENV"
+          fi
+
+      - name: Build
+        working-directory: agent
+        run: |
+          mkdir -p ../dist
+          for arch in amd64 arm64; do
+            CGO_ENABLED=0 GOOS=linux GOARCH=$arch go build -trimpath \
+              -ldflags "-s -w -X main.version=$VERSION" -o "../dist/daemons-agent-linux-$arch" .
+          done
+          cd ../dist && sha256sum daemons-agent-linux-* >SHA256SUMS && cat SHA256SUMS
+
+      - name: Rolling dev pre-release
+        if: github.ref_type == 'branch'
+        run: |
+          git tag -f dev "$GITHUB_SHA"
+          git push -f origin refs/tags/dev
+          notes="Rolling build of main ($VERSION). Development control planes install from this pre-release."
+          if gh release view dev >/dev/null 2>&1; then
+            gh release edit dev --prerelease --title "dev (rolling)" --notes "$notes"
+            gh release upload dev dist/* --clobber
+          else
+            gh release create dev dist/* --prerelease --latest=false --title "dev (rolling)" --notes "$notes"
+          fi
+
+      - name: Tagged release
+        if: github.ref_type == 'tag'
+        run: |
+          gh release create "$GITHUB_REF_NAME" dist/* installer/install.sh \
+            --verify-tag --title "$GITHUB_REF_NAME" --generate-notes

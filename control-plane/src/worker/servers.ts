@@ -431,3 +431,133 @@ serverRoutes.get('/:id/terminals/:session/ws', async (c) => {
   headers.set('X-Daemons-Session', c.get('sessionId'));
   return serverStub(c.env, row.id).fetch(new Request(target, { headers }));
 });
+
+// --- projects (07): folders in /projects, read live from the server ------------------------
+
+export const PROJECT_NAME = /^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$/;
+const GIT_URL = /^(https:\/\/[^\s'"]+|git@[A-Za-z0-9.-]+:[^\s'"]+)$/;
+
+const LIST_PROJECTS = `cd /projects 2>/dev/null || exit 0
+for d in */; do
+  d=\${d%/}; [ -d "$d" ] || continue
+  b=$(git -C "$d" rev-parse --abbrev-ref HEAD 2>/dev/null)
+  c=""; for f in compose.yaml compose.yml docker-compose.yml docker-compose.yaml; do [ -f "$d/$f" ] && c=$f && break; done
+  m=$(stat -c %Y "$d" 2>/dev/null)
+  printf '%s\t%s\t%s\t%s\n' "$d" "$b" "$c" "$m"
+done`;
+
+type ExecResult = { exit_code: number; stdout: string; stderr: string };
+
+async function exec(env: Env, serverId: string, command: string, timeoutMs = 30_000): Promise<ExecResult> {
+  return (await serverStub(env, serverId).request('exec', { command, cwd: '/projects', user: 'daemon', timeout_ms: timeoutMs }, timeoutMs + 5000)) as unknown as ExecResult;
+}
+
+function agentErrorResponse(c: Context<HonoEnv>, error: unknown) {
+  const code = error instanceof AgentError ? error.code : 'internal';
+  const message = error instanceof Error ? error.message : 'The server reported an error.';
+  return c.json({ error: message, code }, code === 'offline' ? 503 : code === 'timeout' ? 504 : 502);
+}
+
+serverRoutes.get('/:id/projects', async (c) => {
+  const row = await getRow(c.env, c.req.param('id'));
+  if (!row) return c.json({ error: 'Server not found.' }, 404);
+  try {
+    const r = await exec(c.env, row.id, LIST_PROJECTS);
+    const projects = r.stdout
+      .split('\n')
+      .filter(Boolean)
+      .map((line) => {
+        const [name, branch, compose, mtime] = line.split('\t');
+        return { name, path: `/projects/${name}`, branch: branch && branch !== 'HEAD' ? branch : null, compose: compose || null, modifiedAt: Number(mtime) * 1000 || null };
+      });
+    return c.json({ projects });
+  } catch (error) {
+    return agentErrorResponse(c, error);
+  }
+});
+
+serverRoutes.post('/:id/projects', async (c) => {
+  const row = await getRow(c.env, c.req.param('id'));
+  if (!row) return c.json({ error: 'Server not found.' }, 404);
+  const { name, git } = await c.req.json<{ name: string; git?: string }>();
+  if (!PROJECT_NAME.test(name ?? '')) return c.json({ error: 'Use letters, digits, dots, dashes and underscores for the name.', field: 'name' }, 400);
+  const url = (git ?? '').trim();
+  if (url && !GIT_URL.test(url)) return c.json({ error: 'Use an https:// or git@ URL.', field: 'git' }, 400);
+  const command = url
+    ? `test ! -e '/projects/${name}' || { echo "A folder named ${name} already exists." >&2; exit 17; }; GIT_TERMINAL_PROMPT=0 git clone -- '${url}' '/projects/${name}'`
+    : `test ! -e '/projects/${name}' || { echo "A folder named ${name} already exists." >&2; exit 17; }; mkdir -p '/projects/${name}'`;
+  try {
+    const r = await exec(c.env, row.id, command, 120_000);
+    if (r.exit_code === 17) return c.json({ error: `A folder named ${name} already exists.`, field: 'name' }, 409);
+    if (r.exit_code !== 0) {
+      const auth = /Authentication failed|could not read Username|Permission denied \(publickey\)|terminal prompts disabled|Repository not found/i.test(r.stderr);
+      return c.json(
+        {
+          error: auth
+            ? 'The clone needs credentials. Sign in on the server with gh auth login, then try again.'
+            : `git clone failed: ${r.stderr.trim().split('\n').slice(-2).join(' ')}`,
+          code: auth ? 'git_auth' : 'git_failed',
+        },
+        400,
+      );
+    }
+    return c.json({ project: { name, path: `/projects/${name}` } }, 201);
+  } catch (error) {
+    return agentErrorResponse(c, error);
+  }
+});
+
+serverRoutes.delete('/:id/projects/:name', async (c) => {
+  const row = await getRow(c.env, c.req.param('id'));
+  if (!row) return c.json({ error: 'Server not found.' }, 404);
+  const name = c.req.param('name');
+  if (!PROJECT_NAME.test(name) || name === '.' || name === '..') return c.json({ error: 'Bad project name.' }, 400);
+  const { confirm } = await c.req.json<{ confirm: string }>().catch(() => ({ confirm: '' }));
+  if (confirm !== name) return c.json({ error: `Type ${name} to confirm.` }, 400);
+  // Containers first, so nothing keeps running for a folder that is gone.
+  const command = `cd '/projects/${name}' 2>/dev/null || exit 0
+for f in compose.yaml compose.yml docker-compose.yml docker-compose.yaml; do [ -f "$f" ] && { docker compose down --remove-orphans >&2 || exit 18; break; }; done
+cd /projects && rm -rf -- '/projects/${name}'`;
+  try {
+    const r = await exec(c.env, row.id, command, 120_000);
+    if (r.exit_code === 18) return c.json({ error: `docker compose down failed: ${r.stderr.trim().split('\n').pop()}` }, 502);
+    if (r.exit_code !== 0) return c.json({ error: r.stderr.trim() || 'The folder could not be deleted.' }, 502);
+    return c.json({ ok: true });
+  } catch (error) {
+    return agentErrorResponse(c, error);
+  }
+});
+
+serverRoutes.get('/:id/projects/:name/compose', async (c) => {
+  const row = await getRow(c.env, c.req.param('id'));
+  const name = c.req.param('name');
+  if (!row) return c.json({ error: 'Server not found.' }, 404);
+  if (!PROJECT_NAME.test(name)) return c.json({ error: 'Bad project name.' }, 400);
+  try {
+    const r = await exec(c.env, row.id, `cd '/projects/${name}' && docker compose ps --all --format json`);
+    if (r.exit_code !== 0) return c.json({ services: [], error: r.stderr.trim() || null });
+    // Compose prints either one JSON array or one object per line, depending on its version.
+    const text = r.stdout.trim();
+    const items: Record<string, unknown>[] = text.startsWith('[') ? JSON.parse(text) : text.split('\n').filter(Boolean).map((l) => JSON.parse(l));
+    return c.json({
+      services: items.map((s) => ({ service: s.Service, name: s.Name, state: s.State, status: s.Status, ports: s.Publishers ?? [] })),
+    });
+  } catch (error) {
+    return agentErrorResponse(c, error);
+  }
+});
+
+serverRoutes.post('/:id/projects/:name/compose/:action', async (c) => {
+  const row = await getRow(c.env, c.req.param('id'));
+  const name = c.req.param('name');
+  const action = c.req.param('action');
+  if (!row) return c.json({ error: 'Server not found.' }, 404);
+  if (!PROJECT_NAME.test(name) || !['up', 'stop'].includes(action)) return c.json({ error: 'Bad request.' }, 400);
+  try {
+    const r = await exec(c.env, row.id, `cd '/projects/${name}' && docker compose ${action === 'up' ? 'up -d' : 'stop'}`, 120_000);
+    if (r.exit_code !== 0) return c.json({ error: r.stderr.trim().split('\n').slice(-3).join(' ') || 'docker compose failed.' }, 502);
+    return c.json({ ok: true });
+  } catch (error) {
+    return agentErrorResponse(c, error);
+  }
+});
