@@ -20,7 +20,7 @@ test('terminal: start, type, survive a reload, tabs, phone key row', async ({ pa
   await page.getByTestId('sign-in').click();
   await expect(page).toHaveURL(/\/servers/);
   const id = await connectLocalAgent(page, origin);
-  sh("tmux -L daemons kill-server 2>/dev/null || true", 'daemon');
+  sh("tmux -L daemons kill-server 2>/dev/null || true", 'dev');
 
   if (process.env.DEBUG_WS) page.on('console', (m) => console.log('console', m.text()));
   if (process.env.DEBUG_WS) page.on('websocket', (ws) => {
@@ -45,7 +45,7 @@ test('terminal: start, type, survive a reload, tabs, phone key row', async ({ pa
   const lastTick = async () => Math.max(0, ...[...(await screenText(page)).matchAll(/tick-(\d+)/g)].map((m) => Number(m[1])));
   const before = await lastTick();
   await expect.poll(lastTick).toBeGreaterThan(before + 1);
-  expect(sh('tmux -L daemons ls', 'daemon')).toContain('shell');
+  expect(sh('tmux -L daemons ls', 'dev')).toContain('shell');
   await page.locator('[data-testid="terminal"] .xterm-helper-textarea').focus();
   await page.keyboard.press('Control+C');
   await typeInTerminal(page, 'echo stopped\n');

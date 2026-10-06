@@ -143,28 +143,26 @@ step_github_cli() {
 }
 
 step_user() {
-	if id daemon >/dev/null 2>&1; then
-		# Ubuntu ships a legacy system account "daemon" (uid 1, home /usr/sbin, no shell).
-		# Turn it into our login user; never move its old home.
-		[ "$(getent passwd daemon | cut -d: -f6)" = /home/daemon ] || usermod -d /home/daemon daemon
-		[ "$(getent passwd daemon | cut -d: -f7)" = /bin/bash ] || usermod -s /bin/bash daemon
-	elif getent group daemon >/dev/null; then
-		useradd -M -d /home/daemon -s /bin/bash -g daemon daemon
-	else
-		useradd -M -d /home/daemon -s /bin/bash -U daemon
+	# The working user is "dev": Ubuntu already ships a system account "daemon" (uid 1).
+	if ! id dev >/dev/null 2>&1; then
+		if getent group dev >/dev/null; then
+			useradd -m -d /home/dev -s /bin/bash -g dev dev
+		else
+			useradd -m -d /home/dev -s /bin/bash -U dev
+		fi
 	fi
-	if [ ! -d /home/daemon ]; then
-		mkdir -p /home/daemon
-		cp -a /etc/skel/. /home/daemon/
-		chown -R daemon: /home/daemon
-		chmod 750 /home/daemon
+	if [ ! -d /home/dev ]; then
+		mkdir -p /home/dev
+		cp -a /etc/skel/. /home/dev/
+		chown -R dev: /home/dev
+		chmod 750 /home/dev
 	fi
-	usermod -aG sudo,docker daemon
-	write_file /etc/sudoers.d/daemon 'daemon ALL=(ALL) NOPASSWD:ALL' || true
-	chmod 440 /etc/sudoers.d/daemon
-	visudo -cf /etc/sudoers.d/daemon
+	usermod -aG sudo,docker dev
+	write_file /etc/sudoers.d/dev 'dev ALL=(ALL) NOPASSWD:ALL' || true
+	chmod 440 /etc/sudoers.d/dev
+	visudo -cf /etc/sudoers.d/dev
 	mkdir -p /projects
-	chown daemon: /projects
+	chown dev: /projects
 	# Coding agents install into ~/.local/bin and ~/.opencode/bin; put both on login PATHs.
 	# shellcheck disable=SC2016 # expanded at login, not now
 	write_file /etc/profile.d/daemons.sh '# Written by the daemons.run installer.
@@ -203,24 +201,24 @@ step_node() {
 	$APT install nodejs
 }
 
-as_daemon() { runuser -l daemon -c "$1"; }
+as_dev() { runuser -l dev -c "$1"; }
 
 step_coding_agents() {
 	for agent in $AGENTS; do
 		case $agent in
 		claude)
-			[ -x /home/daemon/.local/bin/claude ] || as_daemon 'curl -fsSL https://claude.ai/install.sh | bash'
+			[ -x /home/dev/.local/bin/claude ] || as_dev 'curl -fsSL https://claude.ai/install.sh | bash'
 			;;
 		codex)
 			command -v codex >/dev/null 2>&1 || npm install -g @openai/codex
 			;;
 		opencode)
-			[ -x /home/daemon/.opencode/bin/opencode ] || as_daemon 'curl -fsSL https://opencode.ai/install | bash'
+			[ -x /home/dev/.opencode/bin/opencode ] || as_dev 'curl -fsSL https://opencode.ai/install | bash'
 			;;
 		esac
 	done
 	for agent in $AGENTS; do
-		as_daemon "command -v $agent"
+		as_dev "command -v $agent"
 	done
 }
 

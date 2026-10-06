@@ -38,8 +38,8 @@ func handleExec(ctx context.Context, _ *conn, raw json.RawMessage, _ *channel) (
 	if err := json.Unmarshal(raw, &p); err != nil || p.Command == "" {
 		return nil, nil, perr("bad_request", "command is required")
 	}
-	if p.User != "" && p.User != "daemon" && p.User != "root" {
-		return nil, nil, perr("bad_request", "user must be daemon or root")
+	if p.User != "" && p.User != "dev" && p.User != "root" {
+		return nil, nil, perr("bad_request", "user must be dev or root")
 	}
 	if p.Cwd == "" {
 		p.Cwd = "/projects"

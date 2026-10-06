@@ -30,7 +30,7 @@ set -as terminal-features ",xterm-256color:RGB"
 
 var sessionName = regexp.MustCompile(`^[A-Za-z0-9_-]{1,32}$`)
 
-// terminals runs tmux on its own server socket as user daemon.
+// terminals runs tmux on its own server socket as user dev.
 type terminals struct {
 	socket string
 	conf   string
@@ -183,7 +183,7 @@ func handleTerminalOpen(ctx context.Context, c *conn, raw json.RawMessage, ch *c
 	return M{"created": created}, after, nil
 }
 
-// attach starts a tmux attach client on a fresh PTY owned by user daemon.
+// attach starts a tmux attach client on a fresh PTY owned by user dev.
 func (t *terminals) attach(session string, cols, rows int) (*termClient, error) {
 	cmd, err := t.cmd("attach-session", "-t", "="+session)
 	if err != nil {

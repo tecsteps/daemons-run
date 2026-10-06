@@ -60,9 +60,10 @@ export async function shoot(context: BrowserContext, path: string, epic: string,
         } catch {}
       });
       await page.goto(path);
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('load');
+      await page.locator('[aria-busy="true"]').first().waitFor({ state: 'detached', timeout: 15_000 }).catch(() => undefined);
       if (wait) await wait(page);
-      await page.waitForTimeout(300);
+      await page.waitForTimeout(700);
       await page.screenshot({ path: join(dir, `${name}-${vp}-${scheme}.png`), fullPage: false });
       // No horizontal page scroll at any width.
       const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);

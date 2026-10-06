@@ -18,8 +18,8 @@ cloud-init (tiny, token in a root-only file) → curl https://<control-plane>/in
 
 - Idempotent POSIX shell. Rerunning it is the repair path.
 - Installs: Docker Engine + Compose plugin (official apt repo), git, GitHub CLI (`gh`), curl, build-essential, tmux, ufw, unattended-upgrades.
-- Creates user `daemon` (sudo, docker group), `/projects` owned by `daemon`.
-- Installs the coding agents chosen at server creation (any of Claude Code, Codex, OpenCode), for user `daemon`, using each vendor's official install method (Node.js LTS when one needs it). Only installed; the user signs in themselves in the terminal (06). Adding one later: rerun the installer with another agent selected on the server page.
+- Creates user `dev` (sudo, docker group), `/projects` owned by `dev`. Not `daemon`: Ubuntu already ships a system account of that name (uid 1, used by atd); owner decision 2026-10-06.
+- Installs the coding agents chosen at server creation (any of Claude Code, Codex, OpenCode), for user `dev`, using each vendor's official install method (Node.js LTS when one needs it). Only installed; the user signs in themselves in the terminal (06). Adding one later: rerun the installer with another agent selected on the server page.
 - Downloads the `daemons-agent` binary for the VM architecture (amd64 and arm64) from the GitHub release named by the installer version, verifies it against the release's `SHA256SUMS`, installs the systemd unit, enrolls, starts it (release process: 12).
 - Reports progress steps to the control plane, shown in the 04 progress view.
 - **Host firewall**: `ufw` default deny incoming, allow SSH (IPv4 and IPv6). Docker bypasses ufw for published ports, so the installer sets `"ip": "127.0.0.1"` in `/etc/docker/daemon.json`: `ports: ["3306:3306"]` in a Compose file binds to loopback unless the user explicitly writes `0.0.0.0:`. Apps are reached through 08, not open ports.
@@ -34,7 +34,7 @@ cloud-init (tiny, token in a root-only file) → curl https://<control-plane>/in
 
 ## daemons-agent
 
-- Go, single binary, runs as root (it needs PTYs for `daemon` and service discovery), started by systemd.
+- Go, single binary, runs as root (it needs PTYs for `dev` and service discovery), started by systemd.
 - Opens one WebSocket to `wss://<control-plane>/agent/connect`, which lands in that server's Durable Object. Reconnects with backoff, forever.
 - Protocol: JSON messages `{id, type, ...}` with replies `{id, ok, ...}`; terminal data as binary frames tagged with a channel id. Messages in v1:
   - `register` (protocol version, agent version, hostname, OS, arch, CPU, RAM, disk), `heartbeat` (every 30 s, liveness only); details such as load, disk and listening ports are fetched on demand when a page needs them

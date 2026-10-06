@@ -60,7 +60,7 @@ func main() {
 	case "cli":
 		os.Exit(runCLI(args))
 	case "file-op":
-		// Internal: one file operation, run as user daemon (see files.go).
+		// Internal: one file operation, run as user dev (see files.go).
 		os.Exit(fileOpMain())
 	default:
 		fmt.Fprint(os.Stderr, usage)

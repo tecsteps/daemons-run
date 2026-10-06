@@ -213,7 +213,7 @@ func callAgent(req cliRequest) (M, error) {
 	nc, err := net.DialTimeout("unix", cliSocketPath, 5*time.Second)
 	if err != nil {
 		if errors.Is(err, fs.ErrPermission) {
-			return nil, errors.New("permission denied; run as user daemon or root")
+			return nil, errors.New("permission denied; run as user dev or root")
 		}
 		return nil, fmt.Errorf("daemons-agent is not running (%s): try `sudo systemctl status daemons-agent`", cliSocketPath)
 	}

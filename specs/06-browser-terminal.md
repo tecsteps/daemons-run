@@ -15,7 +15,7 @@ Reuse from the old project: [ui-reference.md](ui-reference.md), sections "Browse
 ## Scope
 
 - xterm.js in the UI (Geist Mono, the old terminal styling), WebSocket from the browser to the server's Durable Object, relayed to the agent.
-- **Sessions survive disconnects.** Every terminal is a tmux session on the VM, running as `daemon`. Closing the tab or losing Wi-Fi does not kill Claude Code; reopening attaches again.
+- **Sessions survive disconnects.** Every terminal is a tmux session on the VM, running as `dev`. Closing the tab or losing Wi-Fi does not kill Claude Code; reopening attaches again.
 - Terminal tabs per server: list existing tmux sessions, new terminal, rename, close (kills the session after confirmation).
 - New terminal opens in a chosen directory (default `/projects`, or a project's folder from 07).
 - Quick start buttons on an empty terminal: one per coding agent installed on that server (Claude Code, Codex, OpenCode) plus **Shell**.

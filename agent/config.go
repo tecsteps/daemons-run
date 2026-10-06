@@ -23,7 +23,7 @@ const (
 	defaultConfigPath = "/etc/daemons/agent.toml"
 	defaultTokenPath  = "/etc/daemons/enroll-token"
 	protocolVersion   = 1
-	daemonUserName    = "daemon"
+	daemonUserName    = "dev"
 )
 
 type config struct {
@@ -205,7 +205,7 @@ func diskUsage(path string) (total, used uint64) {
 	return total, total - uint64(st.Bfree)*bs
 }
 
-// codingAgents lists the coding agents found on daemon's login PATH.
+// codingAgents lists the coding agents found on dev's login PATH.
 func codingAgents() []string {
 	_, home, _ := daemonUser()
 	found := []string{}
@@ -220,7 +220,7 @@ func codingAgents() []string {
 	return found
 }
 
-// daemonUser returns the credential to run work as user daemon. When the agent is not
+// daemonUser returns the credential to run work as user dev. When the agent is not
 // root (tests, development) it returns nil and the current user's home: work runs as us.
 func daemonUser() (*syscall.Credential, string, error) {
 	if os.Geteuid() != 0 {
@@ -248,7 +248,7 @@ func lookupCredential(name string) (*syscall.Credential, string, error) {
 	return cred, u.HomeDir, nil
 }
 
-// userCommand prepares cmd to run as user (daemon or root) with a clean login-like environment.
+// userCommand prepares cmd to run as user (dev or root) with a clean login-like environment.
 func userCommand(cmd *exec.Cmd, asRoot bool) error {
 	cred, home, err := daemonUser()
 	name := daemonUserName

@@ -80,14 +80,14 @@ start=$(date +%s)
 docker exec -e DAEMONS_RELEASE_BASE_URL="$CP/release" "$NAME" sh -c "curl -fsSL $CP/install.sh | sh"
 echo "    took $(($(date +%s) - start)) s"
 
-check "user daemon: home, shell, groups" '[ "$(getent passwd daemon | cut -d: -f6,7)" = /home/daemon:/bin/bash ] && id -nG daemon | grep -qw sudo && id -nG daemon | grep -qw docker'
-check "daemon has passwordless sudo" 'runuser -u daemon -- sudo -n true'
-check "/projects owned by daemon" '[ "$(stat -c %U /projects)" = daemon ]'
+check "user dev: home, shell, groups" '[ "$(getent passwd dev | cut -d: -f6,7)" = /home/dev:/bin/bash ] && id -nG dev | grep -qw sudo && id -nG dev | grep -qw docker'
+check "dev has passwordless sudo" 'runuser -u dev -- sudo -n true'
+check "/projects owned by dev" '[ "$(stat -c %U /projects)" = dev ]'
 check "docker binds published ports to loopback" '[ "$(jq -r .ip /etc/docker/daemon.json)" = 127.0.0.1 ]'
 check "docker, compose, gh, git, tmux, make, node installed" 'docker --version && docker compose version && gh --version && git --version && tmux -V && make --version && node --version'
 check "unattended-upgrades enabled" 'grep -q Unattended-Upgrade /etc/apt/apt.conf.d/20auto-upgrades && dpkg -s unattended-upgrades'
 check "ufw: IPv6 on, deny incoming, SSH allowed (v4+v6)" 'grep -q "^IPV6=yes" /etc/default/ufw && grep -q "^DEFAULT_INPUT_POLICY=\"DROP\"" /etc/default/ufw && grep -q "dport 22 " /etc/ufw/user.rules && grep -q "dport 22 " /etc/ufw/user6.rules'
-check "claude, codex, opencode on daemon login PATH" 'runuser -l daemon -c "command -v claude && command -v codex && command -v opencode"'
+check "claude, codex, opencode on dev login PATH" 'runuser -l dev -c "command -v claude && command -v codex && command -v opencode"'
 check "daemons-agent installed, daemons symlink" '[ "$(daemons-agent version)" = test ] && [ "$(readlink /usr/local/bin/daemons)" = /usr/local/bin/daemons-agent ] && [ "$(daemons version)" = test ]'
 check "agent.toml written with mode 600" '[ "$(stat -c %a /etc/daemons/agent.toml)" = 600 ] && grep -q "credential = \"cred-test\"" /etc/daemons/agent.toml'
 check "enrollment token file deleted" '[ ! -e /etc/daemons/enroll-token ]'

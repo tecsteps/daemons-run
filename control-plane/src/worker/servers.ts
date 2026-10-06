@@ -449,7 +449,7 @@ done`;
 type ExecResult = { exit_code: number; stdout: string; stderr: string };
 
 async function exec(env: Env, serverId: string, command: string, timeoutMs = 30_000): Promise<ExecResult> {
-  return (await serverStub(env, serverId).request('exec', { command, cwd: '/projects', user: 'daemon', timeout_ms: timeoutMs }, timeoutMs + 5000)) as unknown as ExecResult;
+  return (await serverStub(env, serverId).request('exec', { command, cwd: '/projects', user: 'dev', timeout_ms: timeoutMs }, timeoutMs + 5000)) as unknown as ExecResult;
 }
 
 function agentErrorResponse(c: Context<HonoEnv>, error: unknown) {

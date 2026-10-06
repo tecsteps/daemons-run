@@ -52,7 +52,7 @@ export function useGateway(origin: string | undefined) {
 
 function suggestAppName(p: Port) {
   const base = (p.cwd.split('/').filter(Boolean).pop() ?? p.process).toLowerCase().replace(/[^a-z0-9-]+/g, '-').replace(/^-+|-+$/g, '');
-  return (base && base !== 'projects' && base !== 'daemon' ? base : `app-${p.port}`).slice(0, 40);
+  return (base && base !== 'projects' && base !== 'dev' ? base : `app-${p.port}`).slice(0, 40);
 }
 
 /** "Port 5173 (vite, /projects/shop) — Expose?" for one server. */

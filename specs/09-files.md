@@ -14,10 +14,10 @@ Reuse from the old project: [ui-reference.md](ui-reference.md), sections "Files"
 
 ## Scope
 
-- Tree and list view rooted at `/projects` (navigate up to `/home/daemon` too); hidden files toggle.
+- Tree and list view rooted at `/projects` (navigate up to `/home/dev` too); hidden files toggle.
 - Open a text file in a CodeMirror editor (syntax highlighting, save with Cmd+S, unsaved-changes guard). Images preview inline.
 - Create file, create folder, rename, delete (with confirmation), upload (drag and drop, multiple files), download (single file; folder as `.tar.gz`).
-- Every operation runs as user `daemon` through the agent's `file.*` messages.
+- Every operation runs as user `dev` through the agent's `file.*` messages.
 - Limits: editor opens files up to 2 MB; upload and download up to 100 MB per file, streamed in chunks.
 - A conflict check on save: if the file changed on disk since opening (for example a coding agent edited it), offer reload or overwrite.
 

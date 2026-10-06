@@ -1,5 +1,7 @@
 # daemons-agent wire protocol (version 1)
 
+The working user on the VM is `dev` (Ubuntu already has a system account `daemon`; owner decision 2026-10-06).
+
 The contract between `daemons-agent` on a VM and the control plane Worker. Both sides are built
 against this file; change it first, then the code.
 
@@ -106,16 +108,16 @@ Error codes: `bad_request`, `not_found`, `exists`, `conflict`, `forbidden` (perm
 | Type | Direction | Params → result |
 |---|---|---|
 | `register` | agent → CP | see above → `server_id`, `name` |
-| `system.info` | CP → agent | → `hostname, os, arch, cpus, memory_bytes, memory_used_bytes, disk_bytes, disk_used_bytes, load1, uptime_s, agent_version, agents: ["claude","codex","opencode"]` (coding agents found on `daemon`'s PATH) |
-| `exec` | CP → agent | `command` (string, run with `/bin/bash -lc` as `user`), `cwd` (default `/projects`), `user` (`daemon` default, or `root`), `timeout_ms` (default 30000, max 120000) → `exit_code, stdout, stderr, truncated` (each stream capped at 1 MiB) |
+| `system.info` | CP → agent | → `hostname, os, arch, cpus, memory_bytes, memory_used_bytes, disk_bytes, disk_used_bytes, load1, uptime_s, agent_version, agents: ["claude","codex","opencode"]` (coding agents found on `dev`'s PATH) |
+| `exec` | CP → agent | `command` (string, run with `/bin/bash -lc` as `user`), `cwd` (default `/projects`), `user` (`dev` default, or `root`), `timeout_ms` (default 30000, max 120000) → `exit_code, stdout, stderr, truncated` (each stream capped at 1 MiB) |
 | `ports.list` | CP → agent | → `ports: [{port, address, process, pid, cwd}]` listening TCP sockets on loopback and any address, IPv4 and IPv6, excluding the agent's own |
 
 ### Terminals (06)
 
-Every terminal is a tmux session of user `daemon` on the agent's own tmux server
+Every terminal is a tmux session of user `dev` on the agent's own tmux server
 (`tmux -L daemons -f /etc/daemons/tmux.conf`, which the agent writes: status bar off, no
 alternate screen so scrollback reaches the browser, `escape-time 0`, `history-limit 50000`,
-`default-terminal xterm-256color`, mouse off). Environment: `HOME=/home/daemon`, `USER=daemon`,
+`default-terminal xterm-256color`, mouse off). Environment: `HOME=/home/dev`, `USER=dev`,
 `SHELL=/bin/bash`, `TERM=xterm-256color`, `LANG=C.UTF-8`.
 
 | Type | Direction | Params → result |
@@ -132,7 +134,7 @@ Session names: `[A-Za-z0-9_-]{1,32}`.
 
 ### Files (09)
 
-All as user `daemon`. Paths are absolute. Text and binary content travels as base64.
+All as user `dev`. Paths are absolute. Text and binary content travels as base64.
 
 | Type | Params → result |
 |---|---|
@@ -171,7 +173,7 @@ rewrites `Location` headers pointing at `localhost`/`127.0.0.1:<port>` to the pu
 
 ## Local CLI socket
 
-The `daemons` CLI talks to the agent over `/run/daemons/agent.sock` (owner root, group `daemon`,
+The `daemons` CLI talks to the agent over `/run/daemons/agent.sock` (owner root, group `dev`,
 mode 660): one JSON request line, one JSON reply line.
 
 | CLI | Request line | Reply |

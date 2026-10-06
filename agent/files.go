@@ -1,8 +1,8 @@
 package main
 
-// File operations run as user daemon. When the agent is root it re-executes itself as
-// daemon ("daemons-agent file-op", one request on stdin, one reply on stdout), so the
-// kernel enforces daemon's permissions and new files belong to daemon. When the agent is
+// File operations run as user dev. When the agent is root it re-executes itself as
+// dev ("daemons-agent file-op", one request on stdin, one reply on stdout), so the
+// kernel enforces dev's permissions and new files belong to dev. When the agent is
 // not root (development, tests) the operation runs in-process as the current user.
 
 import (
@@ -263,7 +263,7 @@ func fileRename(from, to string) (M, error) {
 	return nil, fsErr(os.Rename(from, to))
 }
 
-// handleFileArchive streams a .tar.gz of a folder on the channel, as user daemon.
+// handleFileArchive streams a .tar.gz of a folder on the channel, as user dev.
 func handleFileArchive(_ context.Context, c *conn, raw json.RawMessage, ch *channel) (M, func(), error) {
 	var p struct {
 		Path string `json:"path"`
