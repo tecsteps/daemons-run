@@ -1,0 +1,34 @@
+// Control plane Worker. No account-specific IDs here: the Deploy button provisions D1 itself,
+// and `npm run install-control-plane` writes a local config with the IDs it created.
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "daemons",
+  "main": "src/worker/index.ts",
+  "compatibility_date": "2026-09-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "workers_dev": true,
+  "preview_urls": false,
+  "assets": {
+    "directory": "./dist/client",
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application",
+    "run_worker_first": ["/api/*", "/agent/*", "/install.sh"]
+  },
+  "d1_databases": [
+    { "binding": "DB", "database_name": "daemons", "migrations_dir": "migrations" }
+  ],
+  "durable_objects": {
+    "bindings": [
+      { "name": "SERVER_CONNECTION", "class_name": "ServerConnection" },
+      { "name": "KEY_VAULT", "class_name": "KeyVault" }
+    ]
+  },
+  "migrations": [
+    { "tag": "v1", "new_sqlite_classes": ["ServerConnection", "KeyVault"] }
+  ],
+  "vars": {
+    "AGENT_RELEASE": "dev"
+  },
+  "rules": [{ "type": "Text", "globs": ["**/*.sh", "**/*.tmpl"], "fallthrough": true }],
+  "observability": { "enabled": true }
+}

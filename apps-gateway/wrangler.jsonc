@@ -1,0 +1,12 @@
+// The apps gateway (08): a separate origin for exposed apps. Stateless; every request goes to
+// the control plane's AppsGateway entrypoint through a service binding.
+{
+  "$schema": "../control-plane/node_modules/wrangler/config-schema.json",
+  "name": "daemons-apps",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-09-01",
+  "workers_dev": true,
+  "preview_urls": false,
+  "services": [{ "binding": "CONTROL_PLANE", "service": "daemons", "entrypoint": "AppsGateway" }],
+  "observability": { "enabled": true }
+}

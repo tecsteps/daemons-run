@@ -1,0 +1,544 @@
+/* Adapted from old daemons-run resources/css/app.css (tokens, dark mode, phone variant, terminal font). */
+@import 'tailwindcss';
+@import '@fontsource-variable/inter';
+@import '@fontsource/geist-mono/400.css';
+@import '@fontsource/geist-mono/500.css';
+@import '@fontsource/geist-mono/700.css';
+
+@source '../';
+
+/* The terminal's own Geist Mono family. xterm sizes its cell from this face
+   and, in the DOM renderer, draws box drawing and block elements (U+2500-259F)
+   from it too, so both subsets live in one family at both weights xterm asks
+   for. Geist's block ink spans -0.34em to 0.96em (centre 0.31em); the overrides
+   give a 1.14em line box on that centre, so every row clips inside the ink and
+   stacked blocks and box lines meet with no gap, and a half block splits the
+   row exactly in half. */
+@font-face {
+    font-family: 'Geist Mono Terminal';
+    font-style: normal;
+    font-weight: 400;
+    font-display: block;
+    src: url('@fontsource/geist-mono/files/geist-mono-symbols2-400-normal.woff2')
+        format('woff2');
+    unicode-range: U+2500-259F;
+    ascent-override: 88%;
+    descent-override: 26%;
+    line-gap-override: 0%;
+}
+@font-face {
+    font-family: 'Geist Mono Terminal';
+    font-style: normal;
+    font-weight: 400;
+    font-display: block;
+    src: url('@fontsource/geist-mono/files/geist-mono-latin-400-normal.woff2')
+        format('woff2');
+    unicode-range:
+        U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC,
+        U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193,
+        U+2212, U+2215, U+FEFF, U+FFFD;
+    ascent-override: 88%;
+    descent-override: 26%;
+    line-gap-override: 0%;
+}
+@font-face {
+    font-family: 'Geist Mono Terminal';
+    font-style: normal;
+    font-weight: 700;
+    font-display: block;
+    src: url('@fontsource/geist-mono/files/geist-mono-symbols2-700-normal.woff2')
+        format('woff2');
+    unicode-range: U+2500-259F;
+    ascent-override: 88%;
+    descent-override: 26%;
+    line-gap-override: 0%;
+}
+@font-face {
+    font-family: 'Geist Mono Terminal';
+    font-style: normal;
+    font-weight: 700;
+    font-display: block;
+    src: url('@fontsource/geist-mono/files/geist-mono-latin-700-normal.woff2')
+        format('woff2');
+    unicode-range:
+        U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC,
+        U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193,
+        U+2212, U+2215, U+FEFF, U+FFFD;
+    ascent-override: 88%;
+    descent-override: 26%;
+    line-gap-override: 0%;
+}
+
+
+@custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
+
+/* Phone portrait, or a short landscape viewport (phones rotated past md). */
+@custom-variant phone {
+    @media (max-width: 47.999rem),
+        ((orientation: landscape) and (max-height: 31.999rem)) {
+        @slot;
+    }
+}
+
+/* Landscape phones are wider than md but still short. */
+@custom-variant phone-landscape {
+    @media (orientation: landscape) and (max-height: 31.999rem) {
+        @slot;
+    }
+}
+
+@media (pointer: coarse) {
+    [data-terminal-focus] .xterm-viewport {
+        scrollbar-width: none;
+    }
+
+    [data-terminal-focus] .xterm-viewport::-webkit-scrollbar {
+        display: none;
+    }
+}
+
+[data-testid='files-editor'][data-soft-wrap='off'] .cm-scroller {
+    overflow-x: auto;
+    overflow-y: auto;
+    scrollbar-width: none;
+}
+
+[data-testid='files-editor'][data-soft-wrap='off']
+    .cm-scroller::-webkit-scrollbar {
+    display: none;
+    width: 0;
+    height: 0;
+}
+
+[data-testid='files-editor'][data-soft-wrap='on'] .cm-scroller {
+    overflow-x: hidden;
+    overflow-y: auto;
+}
+
+[data-testid='files-editor'] .cm-gutters {
+    position: sticky;
+    left: 0;
+    z-index: 1;
+}
+
+@theme {
+    --font-sans:
+        'Inter Variable', 'Inter', ui-sans-serif, system-ui, sans-serif,
+        'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
+        'Noto Color Emoji';
+    --font-mono:
+        'Geist Mono', ui-monospace, SFMono-Regular,
+        Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+
+    --color-ink-950: #050708;
+    --color-ink-900: #11120f;
+    --color-card: var(--color-ink-900);
+    --color-canvas: #ffffff;
+    --color-surface: #fbfbfa;
+    --color-foreground: #11120f;
+    --color-bone: #f5f1e8;
+    --color-muted: #687078;
+    --color-line: #dfe3df;
+    --color-lime: #c4ff18;
+    --color-lime-deep: #647a00;
+    --color-lime-pale: #f4ffd6;
+    --color-purple: #6e38d5;
+    --color-cyan: #19afc0;
+    --color-cyan-deep: #0d7a87;
+    --color-green: #15945a;
+    --color-amber: #d98900;
+    --color-red: #c93338;
+    --color-red-deep: #b52b30;
+    --color-muted-bright: #687078;
+    --color-amber-deep: #825100;
+
+    /* Quiet keyboard ring. Muted stays readable in both themes and is not
+       rewritten on lime fills, so the ring stays visible on the canvas. */
+    --focus-ring-shadow: 0 0 0 2px var(--color-muted);
+
+    --color-background: var(--color-canvas);
+    --color-foreground: var(--color-ink-900);
+    --color-popover: var(--color-canvas);
+    --color-popover-foreground: var(--color-ink-900);
+    --color-primary: var(--color-lime);
+    --color-primary-foreground: var(--color-ink-900);
+    --color-secondary: var(--color-surface);
+    --color-secondary-foreground: var(--color-ink-900);
+    --color-muted-foreground: var(--color-muted);
+    --color-accent: var(--color-lime-pale);
+    --color-accent-foreground: var(--color-ink-900);
+    --color-destructive: var(--color-red);
+    --color-destructive-foreground: var(--color-canvas);
+    --color-border: var(--color-line);
+    --color-input: var(--color-line);
+    --color-ring: var(--color-ink-900);
+
+    --text-page: 2rem;
+    --text-page--line-height: 2.375rem;
+    --text-section: 1.25rem;
+    --text-section--line-height: 1.75rem;
+    --text-card: 1.125rem;
+    --text-card--line-height: 1.5rem;
+    --text-body: 0.875rem;
+    --text-body--line-height: 1.375rem;
+    --text-control: 0.875rem;
+    --text-control--line-height: 1.25rem;
+    --text-tech: 0.875rem;
+    --text-tech--line-height: 1.25rem;
+    --text-caption: 0.75rem;
+    --text-caption--line-height: 1.125rem;
+    /* Page title below sm: a 368px column cannot carry 32px titles. */
+    --text-page-phone: 1.5rem;
+    --text-page-phone--line-height: 1.875rem;
+
+    /* Page archetype measures (specs/01-ui/styleguide.md 5a). */
+    --container-form: 48rem;
+    --container-frame: 72rem;
+    --container-console: 90rem;
+    --container-focus: 28rem;
+
+    /* Page rhythm. Phone values switch below through the same variables. */
+    --spacing-page: 1.5rem;
+    --spacing-card: 1.25rem;
+    --spacing-field: 1rem;
+
+    --radius-sm: 0.375rem;
+    --radius-md: 0.5rem;
+    --radius-lg: 0.5rem;
+}
+
+:root {
+    --color-ink-950: #050708;
+    --color-ink-900: #11120f;
+    --color-card: var(--color-ink-900);
+    --color-canvas: #ffffff;
+    --color-surface: #fbfbfa;
+    --color-foreground: #11120f;
+    --color-bone: #f5f1e8;
+    --color-muted: #687078;
+    --color-line: #dfe3df;
+    --color-lime: #c4ff18;
+    --color-lime-deep: #647a00;
+    --color-lime-pale: #f4ffd6;
+    --color-purple: #6e38d5;
+    --color-cyan: #19afc0;
+    --color-cyan-deep: #0d7a87;
+    --color-green: #15945a;
+    --color-amber: #d98900;
+    --color-amber-deep: #825100;
+    --color-red: #c93338;
+    --color-red-deep: #b52b30;
+    --color-muted-bright: #687078;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root:not([data-theme-preference='light']) {
+        color-scheme: dark;
+        --color-ink-900: #f5f1e8;
+        --color-canvas: #0b0e0d;
+        --color-surface: #151917;
+        --color-foreground: #f5f1e8;
+        --color-muted: #aab2ae;
+        --color-line: #39413d;
+        --color-lime-deep: #c4ff18;
+        --color-lime-pale: #26330b;
+        --color-purple: #c3a9ff;
+        --color-cyan: #63dbe7;
+        --color-cyan-deep: #63dbe7;
+        --color-green: #58d494;
+        --color-amber: #ffc15c;
+        --color-amber-deep: #ffc15c;
+        --color-red: #ff8a8e;
+        --color-red-deep: #ff9da0;
+        --color-muted-bright: #b7bfbb;
+    }
+
+    :root:not([data-theme-preference='light']) :where(.bg-lime, .bg-bone) {
+        --color-ink-900: #11120f;
+    }
+
+    :root:not([data-theme-preference='light']) .bg-ink-900 {
+        --color-bone: #11120f;
+        --color-white: #11120f;
+        --color-lime: #647a00;
+    }
+
+    :root:not([data-theme-preference='light']) .surface-ink {
+        --color-ink-900: #11120f;
+        --color-canvas: #ffffff;
+        --color-surface: #fbfbfa;
+        --color-foreground: #11120f;
+        --color-bone: #f5f1e8;
+        --color-muted: #687078;
+        --color-white: #ffffff;
+        --color-lime: #c4ff18;
+    }
+}
+
+:root[data-public],
+:root[data-theme='dark'] {
+    color-scheme: dark;
+    --color-ink-900: #f5f1e8;
+    --color-canvas: #0b0e0d;
+    --color-surface: #151917;
+    --color-foreground: #f5f1e8;
+    --color-muted: #aab2ae;
+    --color-line: #39413d;
+    --color-lime-deep: #c4ff18;
+    --color-lime-pale: #26330b;
+    --color-purple: #c3a9ff;
+    --color-cyan: #63dbe7;
+    --color-cyan-deep: #63dbe7;
+    --color-green: #58d494;
+    --color-amber: #ffc15c;
+    --color-amber-deep: #ffc15c;
+    --color-red: #ff8a8e;
+    --color-red-deep: #ff9da0;
+    --color-muted-bright: #b7bfbb;
+}
+
+:root[data-public] :where(.bg-lime, .bg-bone),
+:root[data-theme='dark'] :where(.bg-lime, .bg-bone) {
+    --color-ink-900: #11120f;
+}
+
+:root[data-public] .bg-ink-900,
+:root[data-theme='dark'] .bg-ink-900 {
+    --color-bone: #11120f;
+    --color-white: #11120f;
+    --color-lime: #647a00;
+}
+
+:root[data-public] .surface-ink,
+:root[data-theme='dark'] .surface-ink {
+    --color-ink-900: #11120f;
+    --color-canvas: #ffffff;
+    --color-surface: #fbfbfa;
+    --color-foreground: #11120f;
+    --color-bone: #f5f1e8;
+    --color-muted: #687078;
+    --color-white: #ffffff;
+    --color-lime: #c4ff18;
+}
+
+@media (max-width: 47.999rem),
+    ((orientation: landscape) and (max-height: 31.999rem)) {
+    [data-testid='theme-toggle'] button {
+        min-height: 2.75rem;
+        min-width: 2.75rem;
+    }
+}
+
+/* Keep phone navigation available on coarse-pointer landscape phones past md. */
+@media (pointer: coarse) and (orientation: landscape) and (max-height: 31.999rem) {
+    html [data-authenticated-shell] [data-mobile-recents-bar] {
+        display: grid !important;
+    }
+
+    [data-tablet-primary-nav] {
+        display: none !important;
+    }
+}
+
+html[data-mobile-nav-hidden='true'] [data-mobile-recents-bar] {
+    display: none;
+}
+
+/* Ink-950 chrome is always dark, including in light theme. Keep muted-bright
+   AA against #050708 without changing the global token or the sign-in
+   surface-ink / bg-ink-900 scopes. */
+.bg-ink-950,
+.bg-ink-950\/90,
+.bg-ink-950\/95 {
+    --color-muted-bright: #b7bfbb;
+}
+
+:root[data-theme='light'] {
+    color-scheme: light;
+}
+
+/* Public marketing pages are deliberately dark. They use the same semantic
+   tokens as the app, so they must not inherit an authenticated user's light
+   preference after navigating from the product. */
+:root[data-public] {
+    color-scheme: dark;
+}
+
+@layer base {
+    html {
+        -webkit-tap-highlight-color: transparent;
+        min-height: 100dvh;
+        background-color: var(--color-canvas);
+        --app-bottom-nav-height: calc(
+            4.5rem + env(safe-area-inset-bottom, 0px)
+        );
+    }
+
+    /* The sign-in page is always dark; the canvas behind it (overscroll,
+       short viewports) must not show the light theme's white. */
+    html:has([data-auth-surface='ink']),
+    html:has([data-auth-surface='ink']) body {
+        background-color: var(--color-ink-950);
+    }
+
+    body {
+        min-height: 100dvh;
+        background-color: var(--color-canvas);
+        color: var(--color-card);
+        font-family: var(--font-sans);
+        font-size: var(--text-body);
+        line-height: var(--text-body--line-height);
+    }
+
+    @media (max-width: 47.999rem),
+        ((orientation: landscape) and (max-height: 31.999rem)) {
+        :root {
+            --spacing-page: 1rem;
+            --spacing-card: 1rem;
+        }
+    }
+
+    html:has([data-authenticated-shell]),
+    body:has([data-authenticated-shell]) {
+        height: 100dvh;
+        overflow: hidden;
+    }
+
+    /* The desktop rail is fixed to the viewport. Its column is also painted
+       behind the shell, so a view taller than the viewport (a full-page
+       capture, a zoomed window) keeps the dark rail to the bottom. */
+    html:has([data-authenticated-shell]) {
+        --app-rail-width: 15rem;
+    }
+
+    html:has([data-sidebar-collapsed='true']) {
+        --app-rail-width: 3.5rem;
+    }
+
+    @media (width >= 64rem) {
+        html:has([data-authenticated-shell]),
+        body:has([data-authenticated-shell]),
+        [data-authenticated-shell] {
+            background-image: linear-gradient(
+                to right,
+                var(--color-ink-950) var(--app-rail-width),
+                transparent var(--app-rail-width)
+            );
+        }
+    }
+
+    body[data-public] {
+        --text-body: 1rem;
+        --text-body--line-height: 1.5rem;
+        --text-caption: 0.875rem;
+        --text-caption--line-height: 1.125rem;
+    }
+
+    /*
+     * Selection vs theme segment vs status. Lime is the next action and the
+     * selected context, never a success guarantee. Amber is waiting, stale, or
+     * a recoverable blocker. Red is failure, destructive action, or urgent
+     * health. Theme preference uses a lifted neutral, not lime.
+     */
+    [data-testid='theme-toggle'] [aria-checked='true'] {
+        box-shadow: 0 1px 0
+            color-mix(in srgb, var(--color-ink-900) 10%, transparent);
+    }
+
+    [data-terminal-focus] .xterm,
+    [data-terminal-focus] .xterm-screen {
+        max-width: 100%;
+    }
+
+    [data-terminal-focus] .xterm-screen a {
+        color: var(--color-cyan);
+        text-decoration: underline;
+        cursor: pointer;
+    }
+
+    [data-terminal-recovery-visible='true'] .xterm-cursor-layer,
+    [data-terminal-recovery-visible='true'] .xterm-cursor {
+        display: none !important;
+    }
+
+    html[data-mobile-nav-hidden='true'] [data-mobile-recents-bar] {
+        display: none;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+            animation-duration: 0.01ms !important;
+            animation-iteration-count: 1 !important;
+            transition-duration: 0.01ms !important;
+            scroll-behavior: auto !important;
+        }
+    }
+}
+
+/*
+ * One keyboard focus ring for the product. Unlayered so it wins over
+ * per-control outline and ring utilities. No offset, so it follows radius.
+ * data-focus-ring=suppress is programmatic focus after a pointer action.
+ */
+:focus-visible {
+    outline: none;
+    outline-offset: 0;
+}
+
+html:not([data-focus-origin='pointer'])
+    :focus-visible:not([data-focus-ring='suppress']):not(
+        [data-slot='input-group-control']
+    ):not([role='menuitem']):not([role='menuitemcheckbox']):not(
+        [role='menuitemradio']
+    ):not(.xterm-helper-textarea) {
+    box-shadow: var(--focus-ring-shadow);
+}
+
+[data-slot='input-group']:has(
+    [data-slot='input-group-control']:focus-visible:not(
+            [data-focus-ring='suppress']
+        )
+) {
+    box-shadow: var(--focus-ring-shadow);
+}
+
+@utility app-selected {
+    border-width: 2px;
+    border-style: solid;
+    border-color: var(--color-lime);
+    background-color: var(--color-lime-pale);
+    color: var(--color-ink-900);
+}
+
+@utility app-segment-active {
+    background-color: var(--color-surface);
+    border-color: var(--color-line);
+    color: var(--color-ink-900);
+    box-shadow: 0 1px 0 color-mix(in srgb, var(--color-ink-900) 8%, transparent);
+}
+
+@utility app-status-amber {
+    color: var(--color-amber);
+}
+
+/*
+ * The card title size (18/24). `text-card` resolves to the --color-card
+ * colour, not the --text-card size, because both theme keys exist; card
+ * titles use this utility until that name clash is resolved.
+ */
+@utility text-card-title {
+    font-size: var(--text-card);
+    line-height: var(--text-card--line-height);
+}
+
+@utility app-status-red {
+    color: var(--color-red);
+}
+
+
+/* xterm.js: let the container own the background; hide the helper textarea's caret. */
+.xterm .xterm-viewport {
+    background-color: transparent !important;
+}

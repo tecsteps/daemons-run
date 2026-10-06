@@ -1,0 +1,17 @@
+{
+  "name": "daemons-run",
+  "private": true,
+  "license": "MIT",
+  "type": "module",
+  "workspaces": ["control-plane", "apps-gateway"],
+  "scripts": {
+    "dev": "npm run dev -w control-plane",
+    "build": "npm run build --workspaces --if-present",
+    "test": "npm test --workspaces --if-present",
+    "lint": "npm run lint --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "install-control-plane": "node scripts/install-control-plane.mjs",
+    "reset-access": "node scripts/install-control-plane.mjs --reset-access"
+  },
+  "engines": { "node": ">=20" }
+}
