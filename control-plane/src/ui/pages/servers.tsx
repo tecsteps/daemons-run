@@ -48,7 +48,9 @@ function ServerCard({ server }: { server: ServerView }) {
               ? (server.error ?? 'Something went wrong.')
               : server.install.step
                 ? `Installing: ${server.install.step}`
-                : 'Waiting for the server to boot…'}
+                : server.provider
+                  ? 'Waiting for the server to boot…'
+                  : 'Waiting for the install command to run…'}
       </p>
       <div className="flex flex-col gap-2 border-t border-line pt-4">
         <Eyebrow>Terminal</Eyebrow>

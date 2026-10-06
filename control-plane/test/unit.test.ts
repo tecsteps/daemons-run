@@ -75,3 +75,14 @@ describe('names and commands', () => {
     expect(installCommand('https://cp.example', 'T', ['claude'])).toBe('curl -fsSL https://cp.example/install.sh | sudo DAEMONS_TOKEN=T DAEMONS_AGENTS="claude" sh');
   });
 });
+
+describe('installer copies', () => {
+  it('match installer/ (run npm run sync-installer -w control-plane)', async () => {
+    const { readFileSync } = await import('node:fs');
+    for (const f of ['install.sh', 'cloud-init.yaml.tmpl']) {
+      expect(readFileSync(new URL(`../src/worker/generated/${f}`, import.meta.url), 'utf8')).toBe(
+        readFileSync(new URL(`../../installer/${f}`, import.meta.url), 'utf8'),
+      );
+    }
+  });
+});

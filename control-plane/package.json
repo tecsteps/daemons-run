@@ -4,11 +4,12 @@
   "type": "module",
   "scripts": {
     "dev": "npm run build:ui && concurrently -k \"vite build --watch --mode development\" \"wrangler dev --local\"",
-    "build": "npm run build:ui",
+    "build": "npm run sync-installer && npm run build:ui",
     "build:ui": "vite build",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "test": "vitest run",
-    "lint": "tsc --noEmit -p tsconfig.json"
+    "lint": "tsc --noEmit -p tsconfig.json",
+    "sync-installer": "cp ../installer/install.sh ../installer/cloud-init.yaml.tmpl src/worker/generated/"
   },
   "dependencies": {
     "@simplewebauthn/server": "^13.3.3",

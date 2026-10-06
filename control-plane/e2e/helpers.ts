@@ -19,7 +19,8 @@ export async function virtualPasskey(page: Page, baseURL: string) {
   });
   if (existsSync(file)) {
     for (const credential of JSON.parse(readFileSync(file, 'utf8'))) {
-      await cdp.send('WebAuthn.addCredential', { authenticatorId, credential });
+      // A stored credential's counter is stale after later sign-ins; a time-based one only grows.
+      await cdp.send('WebAuthn.addCredential', { authenticatorId, credential: { ...credential, signCount: Math.floor(Date.now() / 1000) } });
     }
   }
   return {
