@@ -30,18 +30,16 @@ Where the build stands, so work can resume after a context reset.
 
 ## Next
 
-Path A Deploy button (owner clicks it 2026-10-07), finish 06 port + mobile rechecks, v0.1.0 release, final full-flow run on a fresh CX23, final report.
+Path A Deploy button (owner clicks it 2026-10-07); manual iPhone check (Add a phone passkey, sticky Ctrl, Select sheet); DNS switch of daemons.run to the new homepage (owner decision).
 
 ## URLs
 
 - Control plane (dev): https://daemons-dev.fabian-wesner.workers.dev
 - Apps gateway (dev): https://daemons-apps-dev.fabian-wesner.workers.dev
 
-## Test servers (Hetzner, label daemons-control-plane=daemons-dev.fabian-wesner.workers.dev)
+## Test servers (Hetzner, all labelled managed-by=daemons, daemons-control-plane=daemons-dev.fabian-wesner.workers.dev; SSH key control-plane/e2e/.auth/dev_ed25519)
 
-- ~~`dev-arm-1`~~: deleted 2026-10-06 through the UI (verified gone at Hetzner).
-- `dev-arm-2`: CAX11, all three coding agents, SSH key `control-plane/e2e/.auth/dev_ed25519` (git-ignored), created 2026-10-06.
-- `dev-x86-1`: CX23 (x86), Claude Code + OpenCode, SSH key, created 2026-10-06.
+
 
 ## How to verify
 
