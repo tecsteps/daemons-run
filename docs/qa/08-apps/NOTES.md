@@ -21,3 +21,11 @@ Still open: the cross-origin check on real workers.dev origins (locally both run
 - Cross-origin: `fetch(<control plane>/api/servers, {credentials: 'include'})` from the app page is blocked; a `no-cors` POST to `/api/auth/logout` does nothing (owner still signed in: origin check).
 - 100 MB download through an app: 104857600 bytes in 6.1 s. Terminal echo round trips during the download (typing + screen poll, from this machine): 158–421 ms, baseline 138–155 ms. No stall.
 - Screens: the proxied Vite app, desktop dark and phone light.
+
+## 2026-10-06, coding agent on the server: OpenCode with a free model (dev-arm-2)
+
+`opencode run -m opencode/nemotron-3-ultra-free` as user `dev` in `/projects/agent-test`, no login:
+- created a Vite app under base `/demo/`, started it with nohup, ran `daemons expose 5173 --name demo` → `https://daemons-apps-dev.fabian-wesner.workers.dev/demo/` (private);
+- installed Playwright with Chromium and its apt dependencies (passwordless sudo), wrote and ran a screenshot script (`opencode-playwright-shot.png`);
+- the preview URL opens for the signed-in owner and shows "Hello from OpenCode" (`opencode-demo-preview-phone.png`).
+- Note: non-interactive `opencode run` auto-rejects file access outside the project folder (it stopped once when it tried `/tmp`); interactive sessions ask instead.

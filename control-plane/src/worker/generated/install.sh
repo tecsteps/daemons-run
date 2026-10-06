@@ -122,11 +122,12 @@ step_docker() {
 	apt_repo docker docker.asc https://download.docker.com/linux/ubuntu/gpg "https://download.docker.com/linux/ubuntu $codename stable"
 	$APT install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
 	# Docker bypasses ufw for published ports: bind them to loopback unless a port says otherwise.
+	# "ip" covers the default bridge; default-network-opts covers the networks Compose creates.
 	current='{}'
 	if [ -s /etc/docker/daemon.json ]; then
 		current=$(cat /etc/docker/daemon.json)
 	fi
-	merged=$(printf '%s' "$current" | jq '. + {"ip": "127.0.0.1"}')
+	merged=$(printf '%s' "$current" | jq '. + {"ip": "127.0.0.1"} | .["default-network-opts"].bridge["com.docker.network.bridge.host_binding_ipv4"] = "127.0.0.1"')
 	if write_file /etc/docker/daemon.json "$merged" && have_systemd; then
 		systemctl restart docker
 	fi

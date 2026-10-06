@@ -84,6 +84,7 @@ check "user dev: home, shell, groups" '[ "$(getent passwd dev | cut -d: -f6,7)" 
 check "dev has passwordless sudo" 'runuser -u dev -- sudo -n true'
 check "/projects owned by dev" '[ "$(stat -c %U /projects)" = dev ]'
 check "docker binds published ports to loopback" '[ "$(jq -r .ip /etc/docker/daemon.json)" = 127.0.0.1 ]'
+check "compose networks bind to loopback too" '[ "$(jq -r ".[\"default-network-opts\"].bridge[\"com.docker.network.bridge.host_binding_ipv4\"]" /etc/docker/daemon.json)" = 127.0.0.1 ]'
 check "docker, compose, gh, git, tmux, make, node installed" 'docker --version && docker compose version && gh --version && git --version && tmux -V && make --version && node --version'
 check "unattended-upgrades enabled" 'grep -q Unattended-Upgrade /etc/apt/apt.conf.d/20auto-upgrades && dpkg -s unattended-upgrades'
 check "ufw: IPv6 on, deny incoming, SSH allowed (v4+v6)" 'grep -q "^IPV6=yes" /etc/default/ufw && grep -q "^DEFAULT_INPUT_POLICY=\"DROP\"" /etc/default/ufw && grep -q "dport 22 " /etc/ufw/user.rules && grep -q "dport 22 " /etc/ufw/user6.rules'
@@ -100,9 +101,9 @@ host_check "enroll called once with the register facts" "[ \"\$(grep -c '\"path\
 host_check "no unauthorized or malformed calls" "! grep -q -e unauthorized -e bad_json $WORK/events.jsonl"
 
 echo "--> run 2: rerun with the one-liner (DAEMONS_TOKEN) on the enrolled server"
-before=$(in_box 'sha256sum /etc/daemons/agent.toml /usr/local/bin/daemons-agent /etc/docker/daemon.json /etc/systemd/system/daemons-agent.service /etc/sudoers.d/daemon /etc/profile.d/daemons.sh /etc/ssh/sshd_config.d/01-daemons.conf /etc/ufw/user.rules; stat -c %Y /usr/local/bin/daemons-agent')
+before=$(in_box 'sha256sum /etc/daemons/agent.toml /usr/local/bin/daemons-agent /etc/docker/daemon.json /etc/systemd/system/daemons-agent.service /etc/sudoers.d/dev /etc/profile.d/daemons.sh /etc/ssh/sshd_config.d/01-daemons.conf /etc/ufw/user.rules; stat -c %Y /usr/local/bin/daemons-agent')
 docker exec -e DAEMONS_TOKEN="$TOKEN2" -e DAEMONS_RELEASE_BASE_URL="$CP/release" "$NAME" sh -c "curl -fsSL $CP/install.sh | sh"
-after=$(in_box 'sha256sum /etc/daemons/agent.toml /usr/local/bin/daemons-agent /etc/docker/daemon.json /etc/systemd/system/daemons-agent.service /etc/sudoers.d/daemon /etc/profile.d/daemons.sh /etc/ssh/sshd_config.d/01-daemons.conf /etc/ufw/user.rules; stat -c %Y /usr/local/bin/daemons-agent')
+after=$(in_box 'sha256sum /etc/daemons/agent.toml /usr/local/bin/daemons-agent /etc/docker/daemon.json /etc/systemd/system/daemons-agent.service /etc/sudoers.d/dev /etc/profile.d/daemons.sh /etc/ssh/sshd_config.d/01-daemons.conf /etc/ufw/user.rules; stat -c %Y /usr/local/bin/daemons-agent')
 host_check "rerun changed no config, binary or credential" "[ '$before' = '$after' ]"
 host_check "rerun did not enroll again" "[ \"\$(grep -c '\"path\": \"/agent/enroll\"' $WORK/events.jsonl)\" = 1 ]"
 host_check "rerun reported progress with the new token" "[ \"\$(steps done $TOKEN2)\" = '$want' ]"
